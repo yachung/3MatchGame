@@ -4,8 +4,11 @@ using UnityEngine;
 
 public class Dot : MonoBehaviour
 {
-    private int column;
-    private int row;
+    // 현재 좌표
+    private int currentX;
+    private int currentY;
+
+    // 목표 좌표
     private int targetX;
     private int targetY;
 
@@ -14,64 +17,53 @@ public class Dot : MonoBehaviour
     private Vector2 finalTouchPosition;
     private Vector2 tempPosition;
 
+    [SerializeField] private float swipeAngle = 0f;         // 이동 방향 각도
+
     private BoardManager board;
 
-    [SerializeField] private float swipeAngle = 0f;
-
-    public int Column { get => column; set => column = value; }
-    public int Row { get => row; set => row = value; }
-    public int TargetX
-    {
-        get => targetX;
-        set
-        {
-            if (value != targetX)
-                targetX = value;
-        }
-    }
-    public int TargetY { get => targetY; set => targetY = value; }
 
     void Start()
     {
         board = BoardManager.Instance;
 
-        TargetX = (int)transform.position.x;
+        targetX = (int)transform.position.x;
         targetY = (int)transform.position.y;
 
-        Column = TargetX;
-        Row = TargetY;
+        currentX = targetX;
+        currentY = targetY;
     }
 
-    // Update is called once per frame
     void Update()
     {
-        TargetX = Column;
-        TargetY = Row;
+        targetX = currentX;
+        targetY = currentY;
 
-        // MoveTowards the Target
-        if (Mathf.Abs(TargetX - transform.position.x) > .5f)
+        #region MoveTowards the Target
+        // Move To Horizontal
+        if (Mathf.Abs(targetX - transform.position.x) > .1f)
         {
-            tempPosition = new Vector2(TargetX, transform.position.y);
+            tempPosition = new Vector2(targetX, transform.position.y);
             transform.position = Vector2.Lerp(transform.position, tempPosition, .4f);
         }
         else
         {
-            tempPosition = new Vector2(TargetX, transform.position.y);
+            tempPosition = new Vector2(targetX, transform.position.y);
             transform.position = tempPosition;
-            board.allDots[column, row] = this.gameObject;
+            board.allDots[currentX, currentY] = this.gameObject;
         }
-
-        if (Mathf.Abs(TargetY - transform.position.y) > .1f)
+        // Move To Vertical
+        if (Mathf.Abs(targetY - transform.position.y) > .1f)
         {
-            tempPosition = new Vector2(transform.position.x, TargetY);
+            tempPosition = new Vector2(transform.position.x, targetY);
             transform.position = Vector2.Lerp(transform.position, tempPosition, .4f);
         }
         else
         {
-            tempPosition = new Vector2(transform.position.x, TargetY);
+            tempPosition = new Vector2(transform.position.x, targetY);
             transform.position = tempPosition;
-            board.allDots[column, row] = this.gameObject;
+            board.allDots[currentX, currentY] = this.gameObject;
         }
+        #endregion
     }
 
     private void OnMouseDown()
@@ -88,42 +80,47 @@ public class Dot : MonoBehaviour
 
     void CalculateAngle()
     {
+        float distance = Vector2.Distance(finalTouchPosition, firstTouchPosition);
+
         swipeAngle = Mathf.Atan2(finalTouchPosition.y - firstTouchPosition.y, finalTouchPosition.x - firstTouchPosition.x) * Mathf.Rad2Deg;
 
+        if (distance < board.swipeThreshold)
+            return;
+
         Debug.Log(swipeAngle);
+
         MovePieces();
     }
 
     private void MovePieces()
     {
-        // Right Swap
-        if (swipeAngle > -45f && swipeAngle <= 45f && Column < board.width)
+        // Right Swipe
+        if (swipeAngle > -45f && swipeAngle <= 45f && currentX < board.width - 1)
         {
-            otherDot = BoardManager.Instance.allDots[Column + 1, Row];
-            otherDot.GetComponent<Dot>().Column -= 1;
-            Column += 1;
+            otherDot = BoardManager.Instance.allDots[currentX + 1, currentY];
+            otherDot.GetComponent<Dot>().currentX -= 1;
+            currentX += 1;
         }
         // Up Swipe
-        else if (swipeAngle > 45f && swipeAngle <= 135f && Row < board.height)
+        else if (swipeAngle > 45f && swipeAngle <= 135f && currentY < board.height - 1)
         {
-            // 
-            otherDot = BoardManager.Instance.allDots[Column, Row + 1];
-            otherDot.GetComponent<Dot>().Row -= 1;
-            Row += 1;
+            otherDot = BoardManager.Instance.allDots[currentX, currentY + 1];
+            otherDot.GetComponent<Dot>().currentY -= 1;
+            currentY += 1;
         }
         // Left Swipe
-        else if (swipeAngle > 135f || swipeAngle <= -135f && Column > 0)
+        else if (swipeAngle > 135f || swipeAngle <= -135f && currentX > 0)
         {
-            otherDot = BoardManager.Instance.allDots[Column - 1, Row];
-            otherDot.GetComponent<Dot>().Column += 1;
-            Column -= 1;
+            otherDot = BoardManager.Instance.allDots[currentX - 1, currentY];
+            otherDot.GetComponent<Dot>().currentX += 1;
+            currentX -= 1;
         }
         // Down Swipe
-        else if (swipeAngle < -45f || swipeAngle >= -135f && Row > 0)
+        else if (swipeAngle > -135f && swipeAngle <= -45f && currentY > 0)
         {
-            otherDot = BoardManager.Instance.allDots[Column, Row - 1];
-            otherDot.GetComponent<Dot>().Row += 1;
-            Row -= 1;
+            otherDot = BoardManager.Instance.allDots[currentX, currentY - 1];
+            otherDot.GetComponent<Dot>().currentY += 1;
+            currentY -= 1;
         }
     }
 }

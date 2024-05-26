@@ -13,6 +13,8 @@ public class BoardManager : MonoSingleton<BoardManager>
     [SerializeField] private GameObject[] dots;
     [SerializeField] public GameObject[,] allDots { get; set; }
 
+    [SerializeField] public float swipeThreshold = 0.5f;  // 터치 이동 최소 거리 임계값
+
     private GameObject[,] allTiles;
 
     (int, int)[] directions = { (1, 0), (-1, 0), (0, 1), (0, -1) };
@@ -39,9 +41,9 @@ public class BoardManager : MonoSingleton<BoardManager>
         //    }
         //}
 
-        for (int i = 0; i < xDim; ++i)
-        { 
-            for (int j = 0; j < yDim; ++j)
+        for (int j = 0; j < yDim; ++j)
+        {
+            for (int i = 0; i < xDim; ++i)
             {
                 Vector2 tempPosition = new Vector2(i, j);
                 GameObject bgTile = Instantiate(backGroundBlock, tempPosition, Quaternion.identity);
