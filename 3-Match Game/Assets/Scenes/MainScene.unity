@@ -152,9 +152,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ef2fa3bfb7a4a8045a0aeebe7881513b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  xDim: 7
-  yDim: 7
+  width: 7
+  height: 10
   backGroundBlock: {fileID: 8116113097194662698, guid: 71ac32577ad98904abdd706139c15a31, type: 3}
+  dots:
+  - {fileID: 8829530500298405746, guid: 63edd4e5315f4374986303b5885429d1, type: 3}
+  - {fileID: 8280700332966829905, guid: 17fe4f89bfe0c7f4ebc5aa5cd64a8476, type: 3}
+  - {fileID: 8791580854662070372, guid: 7a86d96923fb398499b10d186105edbf, type: 3}
+  - {fileID: 2307847471117947585, guid: 3bb096b96b41fe34c9801e9e32ea97fa, type: 3}
+  - {fileID: 1378245111831257214, guid: 498cb2d9b2021e2448948838b5a2e648, type: 3}
+  - {fileID: 3890296309545489466, guid: 102a8371d07ea9c4fadabaa8824cf6b1, type: 3}
+  - {fileID: 6057787850091947547, guid: 3318208cef099e64583600ba1f04ad7e, type: 3}
 --- !u!4 &403854905
 Transform:
   m_ObjectHideFlags: 0
@@ -498,7 +506,7 @@ Camera:
   m_GameObject: {fileID: 1232618599}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 1
+  m_ClearFlags: 2
   m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
@@ -540,7 +548,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1232618599}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -10}
+  m_LocalPosition: {x: 3, y: 4.5, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
