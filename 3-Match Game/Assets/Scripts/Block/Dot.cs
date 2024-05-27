@@ -5,26 +5,26 @@ using UnityEngine;
 
 public class Dot : MonoBehaviour
 {
-    // ÇöÀç ÁÂÇ¥
+    // í˜„ìž¬ ì¢Œí‘œ
     private int currentX;
     private int currentY;
 
-    public TileType tileType { get; set; }
+    public TileType tileType { get; private set; }
 
-    public bool isMovable;                                  // ÀÌµ¿ °¡´ÉÇÑ Å¸ÀÏÀÎÁö
+    public bool isMovable = true;                                  // ì´ë™ ê°€ëŠ¥í•œ íƒ€ì¼ì¸ì§€
 
     private Vector2 firstTouchPosition;
     private Vector2 finalTouchPosition;
-    private Vector2 targetPosition;                         // Å¸ÀÏÀÌ ÀÌµ¿ÇÒ ¸ñÇ¥ ÁÂÇ¥
+    private Vector2 targetPosition;                         // íƒ€ì¼ì´ ì´ë™í•  ëª©í‘œ ì¢Œí‘œ
 
-    [SerializeField] private float swipeAngle = 0f;         // ÀÌµ¿ ¹æÇâ °¢µµ
+    private float swipeAngle;         // ì´ë™ ë°©í–¥ ê°ë„
 
     public int CurrentX
     {
         get => currentX;
         set
         {
-            if (currentX != value)
+            if (currentX != value && isMovable)
             {
                 currentX = value;
                 StartCoroutine(HorizontalMoveTiles(CurrentX));
@@ -37,7 +37,7 @@ public class Dot : MonoBehaviour
         get => currentY;
         set
         {
-            if (currentY != value)
+            if (currentY != value && isMovable)
             {
                 currentY = value;
                 StartCoroutine(VerticalMoveTiles(CurrentY));
@@ -68,7 +68,7 @@ public class Dot : MonoBehaviour
     {
         CalculateAngle();
 
-        // ÅÍÄ¡ °Å¸® Á¦ÇÑ
+        // í„°ì¹˜ ê±°ë¦¬ ì œí•œ
         float distance = Vector2.Distance(finalTouchPosition, firstTouchPosition);
         if (distance < BoardManager.Instance.swipeThreshold)
             return;
@@ -76,44 +76,11 @@ public class Dot : MonoBehaviour
         BoardManager.Instance.TileSwap(this, swipeAngle);
     }
 
-    // ÅÍÄ¡ °¢µµ °è»ê
+    // í„°ì¹˜ ê°ë„ ê³„ì‚°
     private void CalculateAngle()
     {
         swipeAngle = Mathf.Atan2(finalTouchPosition.y - firstTouchPosition.y, finalTouchPosition.x - firstTouchPosition.x) * Mathf.Rad2Deg;
     }
-
-    // Å¸ÀÏ ÀÌµ¿ ÁÂÇ¥ ¼³Á¤
-    //private void SetTargetPosition()
-    //{
-    //    // Right Swipe
-    //    if (swipeAngle > -45f && swipeAngle <= 45f && CurrentX < board.width - 1)
-    //    {
-    //        otherDot = BoardManager.Instance.allDots[CurrentX + 1, CurrentY];
-    //        otherDot.GetComponent<Dot>().CurrentX -= 1;
-    //        CurrentX += 1;
-    //    }
-    //    // Up Swipe
-    //    else if (swipeAngle > 45f && swipeAngle <= 135f && CurrentY < board.height - 1)
-    //    {
-    //        otherDot = BoardManager.Instance.allDots[CurrentX, CurrentY + 1];
-    //        otherDot.GetComponent<Dot>().CurrentY -= 1;
-    //        CurrentY += 1;
-    //    }
-    //    // Left Swipe
-    //    else if (swipeAngle > 135f || swipeAngle <= -135f && CurrentX > 0)
-    //    {
-    //        otherDot = BoardManager.Instance.allDots[CurrentX - 1, CurrentY];
-    //        otherDot.GetComponent<Dot>().CurrentX += 1;
-    //        CurrentX -= 1;
-    //    }
-    //    // Down Swipe
-    //    else if (swipeAngle > -135f && swipeAngle <= -45f && CurrentY > 0)
-    //    {
-    //        otherDot = BoardManager.Instance.allDots[CurrentX, CurrentY - 1];
-    //        otherDot.GetComponent<Dot>().CurrentY += 1;
-    //        CurrentY -= 1;
-    //    }
-    //}
 
     IEnumerator HorizontalMoveTiles(int targetX)
     {

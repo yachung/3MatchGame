@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -54,10 +54,10 @@ public class BoardManager : MonoSingleton<BoardManager>
     {
         Vector2 tempPosition = new Vector2(x, y);
         int dotToUse = Random.Range(0, dots.Length);
-        GameObject dot = Instantiate(dots[dotToUse], tempPosition, Quaternion.identity);
-        dot.transform.SetParent(transform);
-        dot.name = $"({x}, {y})";
-        allDots[x, y] = dot.GetComponent<Dot>();
+        GameObject objDot = Instantiate(dots[dotToUse], tempPosition, Quaternion.identity);
+        objDot.transform.SetParent(transform);
+        objDot.name = $"({x}, {y})";
+        allDots[x, y] = objDot.GetComponent<Dot>();
     }
 
     // 타일 방향 계산해서 스왑
@@ -96,5 +96,9 @@ public class BoardManager : MonoSingleton<BoardManager>
             targetDot.CurrentY += 1;
             startDot.CurrentY -= 1;
         }
+    }
+
+    public void TileMatchCheck(int x, int y)
+    {
     }
 }
