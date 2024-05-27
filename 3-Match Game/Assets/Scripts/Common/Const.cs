@@ -8,4 +8,15 @@ namespace Const
     {
 
     }
+
+    public enum TileType
+    {
+        DarkGreen,
+        Green,
+        Indigo,
+        Red,
+        Salmon,
+        Teal,
+        Yellow,
+    }
 }

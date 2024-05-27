@@ -1,65 +1,100 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class BoardManager : MonoSingleton<BoardManager>
 {
-    // ÇöÀç º¸µåÀÇ X, Y ±æÀÌ
+    // í˜„ìž¬ ë³´ë“œì˜ X, Y ê¸¸ì´
     [SerializeField] public int width = 7;
     [SerializeField] public int height = 7;
 
     [SerializeField] private GameObject backGroundBlock;
 
     [SerializeField] private GameObject[] dots;
-    [SerializeField] public GameObject[,] allDots { get; set; }
+    [SerializeField] public Dot[,] allDots { get; set; }
 
-    [SerializeField] public float swipeThreshold = 0.5f;  // ÅÍÄ¡ ÀÌµ¿ ÃÖ¼Ò °Å¸® ÀÓ°è°ª
+    [SerializeField] public float swipeThreshold = 0.5f;  // í„°ì¹˜ ì´ë™ ìµœì†Œ ê±°ë¦¬ ìž„ê³„ê°’
 
-    private GameObject[,] allTiles;
+    private GameObject[,] allBgTiles;
 
     (int, int)[] directions = { (1, 0), (-1, 0), (0, 1), (0, -1) };
 
     private void Start()
     {
-        allTiles = new GameObject[width, height];
-        allDots = new GameObject[width, height];
+        allBgTiles = new GameObject[width, height];
+        allDots = new Dot[width, height];
         SetBoard(width, height);
     }
 
-    public void SetBoard(int xDim, int yDim)
+    public void SetBoard(int width, int height)
     {
-        this.width = xDim;
-        this.height = yDim;
+        this.width = width;
+        this.height = height;
 
-        //for (int j = yDim / 2; j >= -yDim / 2; --j)
-        //{
-        //    for (int i = -xDim / 2; i <= xDim / 2; ++i)
-        //    {
-        //        GameObject bgBlock = Instantiate(backGroundBlock);
-        //        bgBlock.transform.position = new Vector3(i + 0.1f * i, j + 0.1f * j, 0);
-        //        bgBlock.transform.SetParent(this.transform);
-        //    }
-        //}
-
-        for (int j = 0; j < yDim; ++j)
+        for (int j = 0; j < height; ++j)
         {
-            for (int i = 0; i < xDim; ++i)
+            for (int i = 0; i < width; ++i)
             {
-                Vector2 tempPosition = new Vector2(i, j);
-                GameObject bgTile = Instantiate(backGroundBlock, tempPosition, Quaternion.identity);
-                bgTile.transform.SetParent(this.transform);
-                bgTile.name = $"({i}, {j})";
-                allTiles[i, j] = bgTile;
-
-                int dotToUse = Random.Range(0, dots.Length);
-                GameObject dot = Instantiate(dots[dotToUse], tempPosition, Quaternion.identity);
-                dot.transform.SetParent(transform);
-                dot.name = $"({i}, {j})";
-                allDots[i, j] = dot;
+                CreateBackGroundTile(i, j);
+                CreateDotTile(i, j);
             }
         }
-
     }
 
+    private void CreateBackGroundTile(int x, int y)
+    {
+        Vector2 tempPosition = new Vector2(x, y);
+        GameObject bgTile = Instantiate(backGroundBlock, tempPosition, Quaternion.identity);
+        bgTile.transform.SetParent(transform);
+        bgTile.name = $"({x}, {y})";
+        allBgTiles[x, y] = bgTile;
+    }
 
+    private void CreateDotTile(int x, int y)
+    {
+        Vector2 tempPosition = new Vector2(x, y);
+        int dotToUse = Random.Range(0, dots.Length);
+        GameObject dot = Instantiate(dots[dotToUse], tempPosition, Quaternion.identity);
+        dot.transform.SetParent(transform);
+        dot.name = $"({x}, {y})";
+        allDots[x, y] = dot.GetComponent<Dot>();
+    }
+
+    // íƒ€ì¼ ë°©í–¥ ê³„ì‚°í•´ì„œ ìŠ¤ì™‘
+    public void TileSwap(Dot startDot, float swipeAngle)
+    {
+        int curX = startDot.CurrentX;
+        int curY = startDot.CurrentY;
+
+        Dot targetDot;
+
+        // Right Swipe
+        if (swipeAngle > -45f && swipeAngle <= 45f && curX < width - 1)
+        {
+            targetDot = allDots[curX + 1, curY];
+            targetDot.CurrentX -= 1;
+            startDot.CurrentX += 1;
+        }
+        // Up Swipe
+        else if (swipeAngle > 45f && swipeAngle <= 135f && curY < height - 1)
+        {
+            targetDot = allDots[curX, curY + 1];
+            targetDot.CurrentY -= 1;
+            startDot.CurrentY += 1;
+        }
+        // Left Swipe
+        else if (swipeAngle > 135f || swipeAngle <= -135f && curX > 0)
+        {
+            targetDot = allDots[curX - 1, curY];
+            targetDot.CurrentX += 1;
+            startDot.CurrentX -= 1;
+        }
+        // Down Swipe
+        else if (swipeAngle > -135f && swipeAngle <= -45f && curY > 0)
+        {
+            targetDot = allDots[curX, curY - 1];
+            targetDot.CurrentY += 1;
+            startDot.CurrentY -= 1;
+        }
+    }
 }
