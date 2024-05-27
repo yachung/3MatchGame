@@ -2,6 +2,7 @@ using Const;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 public class Dot : MonoBehaviour
 {
@@ -9,7 +10,7 @@ public class Dot : MonoBehaviour
     private int currentX;
     private int currentY;
 
-    public TileType tileType { get; private set; }
+    public TileType tileType;
 
     public bool isMovable = true;                                  // 이동 가능한 타일인지
 
@@ -27,7 +28,7 @@ public class Dot : MonoBehaviour
             if (currentX != value && isMovable)
             {
                 currentX = value;
-                StartCoroutine(HorizontalMoveTiles(CurrentX));
+                StartCoroutine(HorizontalMoveTiles(() => BoardManager.Instance.BFS(this)));
             }
         }
     }
@@ -40,7 +41,7 @@ public class Dot : MonoBehaviour
             if (currentY != value && isMovable)
             {
                 currentY = value;
-                StartCoroutine(VerticalMoveTiles(CurrentY));
+                StartCoroutine(VerticalMoveTiles(() => BoardManager.Instance.BFS(this)));
             }
         }
     }
@@ -82,45 +83,45 @@ public class Dot : MonoBehaviour
         swipeAngle = Mathf.Atan2(finalTouchPosition.y - firstTouchPosition.y, finalTouchPosition.x - firstTouchPosition.x) * Mathf.Rad2Deg;
     }
 
-    IEnumerator HorizontalMoveTiles(int targetX)
+    IEnumerator HorizontalMoveTiles(Action onComplete)
     {
         while (true)
         {
             // Move To Horizontal
-            if (Mathf.Abs(targetX - transform.position.x) > .1f)
+            if (Mathf.Abs(CurrentX - transform.position.x) > .1f)
             {
-                targetPosition = new Vector2(targetX, transform.position.y);
+                targetPosition = new Vector2(CurrentX, transform.position.y);
                 transform.position = Vector2.Lerp(transform.position, targetPosition, .4f);
 
                 yield return null;
             }
             else
             {
-                targetPosition = new Vector2(targetX, transform.position.y);
+                targetPosition = new Vector2(CurrentX, transform.position.y);
                 transform.position = targetPosition;
                 BoardManager.Instance.allDots[CurrentX, CurrentY] = this;
                 break;
             }
         }
 
-        yield break;
+        onComplete?.Invoke();
     }
 
-    IEnumerator VerticalMoveTiles(int targetY)
+    IEnumerator VerticalMoveTiles(Action onComplete)
     {
         while (true)
         {
             // Move To Vertical
-            if (Mathf.Abs(targetY - transform.position.y) > .1f)
+            if (Mathf.Abs(CurrentY - transform.position.y) > .1f)
             {
-                targetPosition = new Vector2(transform.position.x, targetY);
+                targetPosition = new Vector2(transform.position.x, CurrentY);
                 transform.position = Vector2.Lerp(transform.position, targetPosition, .4f);
 
                 yield return null;
             }
             else
             {
-                targetPosition = new Vector2(transform.position.x, targetY);
+                targetPosition = new Vector2(transform.position.x, CurrentY);
                 transform.position = targetPosition;
                 BoardManager.Instance.allDots[CurrentX, CurrentY] = this;
 
@@ -128,6 +129,6 @@ public class Dot : MonoBehaviour
             }
         }
 
-        yield break;
+        onComplete?.Invoke();
     }
 }
