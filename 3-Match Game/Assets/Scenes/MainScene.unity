@@ -163,6 +163,7 @@ MonoBehaviour:
   - {fileID: 1378245111831257214, guid: 498cb2d9b2021e2448948838b5a2e648, type: 3}
   - {fileID: 3890296309545489466, guid: 102a8371d07ea9c4fadabaa8824cf6b1, type: 3}
   - {fileID: 6057787850091947547, guid: 3318208cef099e64583600ba1f04ad7e, type: 3}
+  swipeThreshold: 0.5
 --- !u!4 &403854905
 Transform:
   m_ObjectHideFlags: 0
@@ -524,7 +525,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 6
+  orthographic size: 10
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2

@@ -7,8 +7,8 @@ using System;
 public class Dot : MonoBehaviour
 {
     // 현재 좌표
-    private int currentX;
-    private int currentY;
+    [SerializeField] private int _currentX;
+    [SerializeField] private int _currentY;
 
     public TileType tileType;
 
@@ -22,34 +22,37 @@ public class Dot : MonoBehaviour
 
     public int CurrentX
     {
-        get => currentX;
+        get => _currentX;
         set
         {
-            if (currentX != value && isMovable)
+            if (_currentX != value && isMovable)
             {
-                currentX = value;
-                StartCoroutine(HorizontalMoveTiles(() => BoardManager.Instance.BFS(this)));
+                _currentX = value;
+                StartCoroutine(HorizontalMoveTiles());
             }
         }
     }
 
     public int CurrentY
     {
-        get => currentY;
+        get => _currentY;
         set
         {
-            if (currentY != value && isMovable)
+            if (_currentY != value && isMovable)
             {
-                currentY = value;
-                StartCoroutine(VerticalMoveTiles(() => BoardManager.Instance.BFS(this)));
+                _currentY = value;
+                StartCoroutine(VerticalMoveTiles());
             }
         }
     }
 
     void Start()
     {
-        CurrentX = (int)transform.position.x;
-        CurrentY = (int)transform.position.y;
+        // 좌표 최초 할당 -> set property 호출하지 않음.
+        _currentX = (int)transform.position.x;
+        _currentY = (int)transform.position.y;
+        // property로 초기화를 하게 되면 CurrentY가 설정되기 전에 CurrentX의 Set 함수가 호출되면서 초기화가 꼬이게 됨.
+        // 따라서 초기화는 필드로 초기화하거나 구조체로 묶어서 한번에 초기화 시키는 등의 방법을 사용해야한다.
     }
 
     private void OnMouseDown()
@@ -83,7 +86,7 @@ public class Dot : MonoBehaviour
         swipeAngle = Mathf.Atan2(finalTouchPosition.y - firstTouchPosition.y, finalTouchPosition.x - firstTouchPosition.x) * Mathf.Rad2Deg;
     }
 
-    IEnumerator HorizontalMoveTiles(Action onComplete)
+    IEnumerator HorizontalMoveTiles(Action onComplete = null)
     {
         while (true)
         {
@@ -104,10 +107,12 @@ public class Dot : MonoBehaviour
             }
         }
 
+        yield return null;
+
         onComplete?.Invoke();
     }
 
-    IEnumerator VerticalMoveTiles(Action onComplete)
+    IEnumerator VerticalMoveTiles(Action onComplete = null)
     {
         while (true)
         {
@@ -128,6 +133,9 @@ public class Dot : MonoBehaviour
                 break;
             }
         }
+
+        // 다른 타일의 코루틴도는것 대기
+        yield return null;
 
         onComplete?.Invoke();
     }
