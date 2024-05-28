@@ -123,15 +123,24 @@ public class BoardManager : MonoSingleton<BoardManager>
     {
         bool[,] visited = new bool[width, height];
         Queue<(int, int)> queue = new Queue<(int, int)>();
-        List<(int, int)> matchedDotList = new List<(int, int)>();
+        HashSet<(int, int)> horizontalSet = new HashSet<(int, int)>();
+        HashSet<(int, int)> verticalSet = new HashSet<(int, int)>();
+        //List<(int, int)> matchedDotList = new List<(int, int)>();
 
         queue.Enqueue((startX, startY));
         visited[startX, startY] = true;
 
+        horizontalSet.Add((startX, startY));
+        verticalSet.Add((startX, startY));
+
         while (queue.Count != 0)
         {
             (int, int) current = queue.Dequeue();
-            matchedDotList.Add(current);
+
+            if (startX == current.Item1)
+                verticalSet.Add(current);
+            else if (startY == current.Item2)
+                horizontalSet.Add(current);
             
             foreach (var dir in directions)
             {
@@ -147,9 +156,21 @@ public class BoardManager : MonoSingleton<BoardManager>
             }
         }
 
-        if (matchedDotList.Count >= 3)
+        if (horizontalSet.Count >= 3)
         {
-            foreach (var dot in matchedDotList)
+            foreach (var dot in horizontalSet)
+            {
+                Color originColor = allDots[dot.Item1, dot.Item2].GetComponent<SpriteRenderer>().color;
+
+                originColor.a = 0.1f;
+
+                allDots[dot.Item1, dot.Item2].GetComponent<SpriteRenderer>().color = originColor;
+            }
+        }
+
+        if (verticalSet.Count >= 3)
+        {
+            foreach (var dot in verticalSet)
             {
                 Color originColor = allDots[dot.Item1, dot.Item2].GetComponent<SpriteRenderer>().color;
 

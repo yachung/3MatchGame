@@ -28,7 +28,7 @@ public class Dot : MonoBehaviour
             if (_currentX != value && isMovable)
             {
                 _currentX = value;
-                StartCoroutine(HorizontalMoveTiles());
+                StartCoroutine(HorizontalMoveTiles(() => BoardManager.Instance.BFS(CurrentX, CurrentY)));
             }
         }
     }
@@ -41,7 +41,7 @@ public class Dot : MonoBehaviour
             if (_currentY != value && isMovable)
             {
                 _currentY = value;
-                StartCoroutine(VerticalMoveTiles());
+                StartCoroutine(VerticalMoveTiles(() => BoardManager.Instance.BFS(CurrentX, CurrentY)));
             }
         }
     }
