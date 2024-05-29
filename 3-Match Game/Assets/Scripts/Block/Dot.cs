@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using UnityEditor.Experimental.GraphView;
 
 public class Dot : MonoBehaviour
 {
@@ -13,6 +14,9 @@ public class Dot : MonoBehaviour
     public TileType tileType;
 
     public bool isMovable = true;                                  // 이동 가능한 타일인지
+    public bool isMatchable = false;        // 매칭가능한 타일인지
+
+    public SwapDirection matchableDirection = SwapDirection.None;
 
     private Vector2 firstTouchPosition;
     private Vector2 finalTouchPosition;
@@ -28,7 +32,8 @@ public class Dot : MonoBehaviour
             if (_currentX != value && isMovable)
             {
                 _currentX = value;
-                StartCoroutine(HorizontalMoveTiles(() => BoardManager.Instance.BFS(CurrentX, CurrentY)));
+                StartCoroutine(HorizontalMoveTiles(() => BoardManager.Instance.AllTileCheck()));
+                //StartCoroutine(HorizontalMoveTiles(() => BoardManager.Instance.MatchPossibilityCheck(CurrentX, CurrentY)));
             }
         }
     }
@@ -41,12 +46,12 @@ public class Dot : MonoBehaviour
             if (_currentY != value && isMovable)
             {
                 _currentY = value;
-                StartCoroutine(VerticalMoveTiles(() => BoardManager.Instance.BFS(CurrentX, CurrentY)));
+                StartCoroutine(VerticalMoveTiles(() => BoardManager.Instance.AllTileCheck()));
             }
         }
     }
 
-    void Start()
+    private void Awake()
     {
         // 좌표 최초 할당 -> set property 호출하지 않음.
         _currentX = (int)transform.position.x;
@@ -64,7 +69,7 @@ public class Dot : MonoBehaviour
     private void OnMouseUp()
     {
         finalTouchPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-
+        Debug.Log("?");
         MovedTiles();
     }
 

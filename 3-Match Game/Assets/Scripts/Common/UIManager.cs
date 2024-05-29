@@ -7,7 +7,7 @@ using Const;
 
 public class UIManager : MonoSingleton<UIManager>
 {
-    Dictionary<SceneType, List<UIBase>> uiStack = new Dictionary<SceneType, List<UIBase>>(); // ¿­¸° ui stack
+    Dictionary<SceneType, List<UIBase>> uiStack = new Dictionary<SceneType, List<UIBase>>(); // ì—´ë¦° ui stack
 
 
     //UICamera & Canvas
@@ -23,19 +23,19 @@ public class UIManager : MonoSingleton<UIManager>
     int sortBase = 200;
     int sortOffset = 100;
 
-    private bool isShowingUIDone = false; // ÆË¾÷Ã¢ Á¦¿Ü
+    private bool isShowingUIDone = false; // íŒì—…ì°½ ì œì™¸
 
-    // ÇØ»óµµ 16:9 ±âÁØÀ¸·Î, °¡·Î°¡ ´õ ±ä ´Ü¸»±â¿¡ ´ëÀÀÇÏ±â À§ÇÑ º¯¼ö
-    // Ex) 24:9ÀÇ ÇØ»óµµ¸¦ °¡Áø ´Ü¸»±â    (1920 * 720) : ScreenWidthRatio = 1.5  <== ÃÖ´ë ´ëÀÀ ÇØ»óµµ
-    // Ex) 16:9ÀÇ ÇØ»óµµ¸¦ °¡Áø ´Ü¸»±â    (1280 * 720) : ScreenWidthRatio = 1
-    // Ex) 18:9ÀÇ ÇØ»óµµ¸¦ °¡Áø ´Ü¸»±â                 : ScreenWidthRatio = 1.125
-    // Ex) 19.5:9ÀÇ ÇØ»óµµ¸¦ °¡Áø ´Ü¸»±â  (1560 * 720) : ScreenWidthRatio = 1.218
-    // Ex) 4:3ÀÇ ÇØ»óµµ¸¦ °¡Áø ´Ü¸»±â     (1280 * 960) : ScreenWidthRatio = 0.75
+    // í•´ìƒë„ 16:9 ê¸°ì¤€ìœ¼ë¡œ, ê°€ë¡œê°€ ë” ê¸´ ë‹¨ë§ê¸°ì— ëŒ€ì‘í•˜ê¸° ìœ„í•œ ë³€ìˆ˜
+    // Ex) 24:9ì˜ í•´ìƒë„ë¥¼ ê°€ì§„ ë‹¨ë§ê¸°    (1920 * 720) : ScreenWidthRatio = 1.5  <== ìµœëŒ€ ëŒ€ì‘ í•´ìƒë„
+    // Ex) 16:9ì˜ í•´ìƒë„ë¥¼ ê°€ì§„ ë‹¨ë§ê¸°    (1280 * 720) : ScreenWidthRatio = 1
+    // Ex) 18:9ì˜ í•´ìƒë„ë¥¼ ê°€ì§„ ë‹¨ë§ê¸°                 : ScreenWidthRatio = 1.125
+    // Ex) 19.5:9ì˜ í•´ìƒë„ë¥¼ ê°€ì§„ ë‹¨ë§ê¸°  (1560 * 720) : ScreenWidthRatio = 1.218
+    // Ex) 4:3ì˜ í•´ìƒë„ë¥¼ ê°€ì§„ ë‹¨ë§ê¸°     (1280 * 960) : ScreenWidthRatio = 0.75
     public Vector2 ScreenSize = Vector2.zero;
-    public Vector2 UsableScreenSize = Vector2.zero; // »ç¿ë°¡´ÉÇÑ ScreenSize ( 1ÀÌÇÏÀÇ ºñÀ² (ex:pad) °æ¿ì ·¹ÅÍ¹Ú½ºÁ¦¿ÜÇÑ »ç¿ë°¡´ÉÇÑ »çÀÌÁî Ä³½Ì )
-    public Vector2 ScreenGapSize = Vector2.zero; // ½ºÅ©¸°»çÀÌÁî - »ç¿ë°¡´ÉÇÑ»çÀÌÁî
+    public Vector2 UsableScreenSize = Vector2.zero; // ì‚¬ìš©ê°€ëŠ¥í•œ ScreenSize ( 1ì´í•˜ì˜ ë¹„ìœ¨ (ex:pad) ê²½ìš° ë ˆí„°ë°•ìŠ¤ì œì™¸í•œ ì‚¬ìš©ê°€ëŠ¥í•œ ì‚¬ì´ì¦ˆ ìºì‹± )
+    public Vector2 ScreenGapSize = Vector2.zero; // ìŠ¤í¬ë¦°ì‚¬ì´ì¦ˆ - ì‚¬ìš©ê°€ëŠ¥í•œì‚¬ì´ì¦ˆ
     private double? _screenWidthRatio;
-    public double ScreenWidthRatio // ½ºÅ©¸° ºñÀ²
+    public double ScreenWidthRatio // ìŠ¤í¬ë¦° ë¹„ìœ¨
     {
         get
         {
@@ -65,7 +65,7 @@ public class UIManager : MonoSingleton<UIManager>
 
     private bool isScreenLock = false;
     /// <summary>
-    /// È­¸é ÅÍÄ¡ ¸·À½¿©ºÎ
+    /// í™”ë©´ í„°ì¹˜ ë§‰ìŒì—¬ë¶€
     /// </summary>
     public bool IsScreenLock
     {
@@ -75,7 +75,7 @@ public class UIManager : MonoSingleton<UIManager>
 
     private bool isESCLock = false;
     /// <summary>
-    /// esc´­·¯¼­ ´İ±â ±â´É ¸·À½¿©ºÎ
+    /// escëˆŒëŸ¬ì„œ ë‹«ê¸° ê¸°ëŠ¥ ë§‰ìŒì—¬ë¶€
     /// </summary>
     public bool IsESCLock
     {
@@ -86,12 +86,10 @@ public class UIManager : MonoSingleton<UIManager>
     // Start is called before the first frame update
     void Awake()
     {
-        base.Awake();
-
-        SetUICamera(); // UICamera ¼¼ÆÃ
-        //SetBottomCanvas(); // ÃÖÇÏ´Ü¿¡ À§Ä¡ÇÒ BottomCanvas ¼¼ÆÃ. »ç¿ë¾ÈÇÔ
-        //SetUILight(); // UICharacter ºñÃâ Light ¼¼ÆÃ
-        //SetDefaultData(); // UI °øÅë»ç¿ëÇÒ µ¥ÀÌÅÍ Á¤ÀÇ. ÄÃ·¯°ª, ÆË¾÷³»ºí·¯ Æ®À©°ª µî
+        SetUICamera(); // UICamera ì„¸íŒ…
+        //SetBottomCanvas(); // ìµœí•˜ë‹¨ì— ìœ„ì¹˜í•  BottomCanvas ì„¸íŒ…. ì‚¬ìš©ì•ˆí•¨
+        //SetUILight(); // UICharacter ë¹„ì¶œ Light ì„¸íŒ…
+        //SetDefaultData(); // UI ê³µí†µì‚¬ìš©í•  ë°ì´í„° ì •ì˜. ì»¬ëŸ¬ê°’, íŒì—…ë‚´ë¸”ëŸ¬ íŠ¸ìœˆê°’ ë“±
 
         eventSystem = gameObject.AddComponent<EventSystem>();
         eventSystem.sendNavigationEvents = false;
@@ -99,7 +97,7 @@ public class UIManager : MonoSingleton<UIManager>
         //StartCoroutine(coUpdate());
     }
 
-    void SetUICamera() // UICamera ¼¼ÆÃ
+    void SetUICamera() // UICamera ì„¸íŒ…
     {
         GameObject cameraObj = new GameObject("@UICamera");
         cameraObj.transform.SetParent(transform);
@@ -107,24 +105,24 @@ public class UIManager : MonoSingleton<UIManager>
         uiCamera.clearFlags = CameraClearFlags.Depth;
         uiCamera.orthographic = true;
         uiCamera.orthographicSize = 36f;
-        uiCamera.farClipPlane = distanceMax + 100; // µü¸ÂÀ»°æ¿ì ±ôºı±ôºıÇÏ´Â¹®Á¦°¡ ÀÖ¾î¼­ Á»´õ ±æ°Ôº¸µµ·ÏÇÔ
+        uiCamera.farClipPlane = distanceMax + 100; // ë”±ë§ì„ê²½ìš° ê¹œë¹¡ê¹œë¹¡í•˜ëŠ”ë¬¸ì œê°€ ìˆì–´ì„œ ì¢€ë” ê¸¸ê²Œë³´ë„ë¡í•¨
         uiCamera.depth = 1;
 
         ResetUICameraPosition();
         //ResetUICameraCullingMask();
     }
 
-    void ResetUICameraPosition() // UICamera Æ÷Áö¼Ç ¼¼ÆÃ
+    void ResetUICameraPosition() // UICamera í¬ì§€ì…˜ ì„¸íŒ…
     {
         uiCamera.transform.localPosition = new Vector3(0f, 0f, -700f);
     }
 
     /// <summary>
-    /// ½ºÅ©¸° ºñÀ², »çÀÌÁî, »ç¿ë°¡´É¹üÀ§µî °»½Å
+    /// ìŠ¤í¬ë¦° ë¹„ìœ¨, ì‚¬ì´ì¦ˆ, ì‚¬ìš©ê°€ëŠ¥ë²”ìœ„ë“± ê°±ì‹ 
     /// </summary>
     public void RefreshScreenWidthRatio()
     {
-        // °£È¤ È­¸éÀÌ È¸ÀüµÇ±â Àü¿¡ ½ºÅ©¸° »çÀÌÁî¸¦ ¹Ş¾Æ¿À´Â °æ¿ì°¡ ÀÖÀ¸¹Ç·Î ¿¹¿ÜÃ³¸® ÇØÁØ´Ù.
+        // ê°„í˜¹ í™”ë©´ì´ íšŒì „ë˜ê¸° ì „ì— ìŠ¤í¬ë¦° ì‚¬ì´ì¦ˆë¥¼ ë°›ì•„ì˜¤ëŠ” ê²½ìš°ê°€ ìˆìœ¼ë¯€ë¡œ ì˜ˆì™¸ì²˜ë¦¬ í•´ì¤€ë‹¤.
         double width = Mathf.Max(Screen.width, Screen.height);
         double height = Mathf.Min(Screen.width, Screen.height);
         //_screenWidthRatio = Mathf.Max(1f, width / (height * 16f / 9f));
@@ -155,7 +153,7 @@ public class UIManager : MonoSingleton<UIManager>
         _screenWidthRatio = fixRatio;
     }
 
-    public void SetDefaultUICanvas(UIBase ui) // uiÀÇ ±âº» Canvas°ª ¼¼ÆÃ
+    public void SetDefaultUICanvas(UIBase ui) // uiì˜ ê¸°ë³¸ Canvasê°’ ì„¸íŒ…
     {
         SetScreenMatchValue(ui.UICanvasScaler);
 
@@ -165,15 +163,15 @@ public class UIManager : MonoSingleton<UIManager>
         ui.UICanvas.sortingOrder = sortBase;
     }
 
-    public void SetScreenMatchValue(CanvasScaler cs) // uiÀÇ Canvas MatchValue¼¼ÆÃ
+    public void SetScreenMatchValue(CanvasScaler cs) // uiì˜ Canvas MatchValueì„¸íŒ…
     {
-        if (ScreenWidthRatio < 1) // 1280 * 720 (16:9) ºñÀ²º¸´Ù °¡·Î°¡ Á¼À¸¸é
+        if (ScreenWidthRatio < 1) // 1280 * 720 (16:9) ë¹„ìœ¨ë³´ë‹¤ ê°€ë¡œê°€ ì¢ìœ¼ë©´
             cs.matchWidthOrHeight = 0f;
-        else                    // 1280 * 720ÀÌ°Å³ª °¡·Î°¡ ´õ ³ĞÀº ¿ÍÀÌµå¸é
+        else                    // 1280 * 720ì´ê±°ë‚˜ ê°€ë¡œê°€ ë” ë„“ì€ ì™€ì´ë“œë©´
             cs.matchWidthOrHeight = 1f;
     }
 
-    /// <returns>UI ÀÌ¸§À¸·Î ÃÖ»ó´ÜÀÎÁö Ã¼Å©</returns>
+    /// <returns>UI ì´ë¦„ìœ¼ë¡œ ìµœìƒë‹¨ì¸ì§€ ì²´í¬</returns>
     public bool IsTopUI(string uiName)
     {
         //return uiStack.Count > 0 && string.Equals(PeekUIStack().GetType().FullName, uiName);
@@ -184,7 +182,7 @@ public class UIManager : MonoSingleton<UIManager>
 
     #region UIStack
     
-    /// <returns>uiStack ¸®½ºÆ®¸¦ ÀüºÎ °¡Á®¿È</returns>
+    /// <returns>uiStack ë¦¬ìŠ¤íŠ¸ë¥¼ ì „ë¶€ ê°€ì ¸ì˜´</returns>
     public List<UIBase> GetUIStack()
     {
         if (uiStack.ContainsKey(SceneManager.Instance.currentScene) == false)
@@ -209,7 +207,7 @@ public class UIManager : MonoSingleton<UIManager>
         if (findUI != null)
         {
             GetUIStack().Remove(findUI);
-            SortAllUICanvas(); // ÀüÃ¼ uiStack Canvas ÀçÁ¤·Ä
+            SortAllUICanvas(); // ì „ì²´ uiStack Canvas ì¬ì •ë ¬
         }
     }
 
@@ -220,27 +218,27 @@ public class UIManager : MonoSingleton<UIManager>
         GetTopUI(true)?.OnBackendUI();
 
         GetUIStack().Insert(0, ui);
-        SortAllUICanvas(); // ÀüÃ¼ uiStack Canvas ÀçÁ¤·Ä
+        SortAllUICanvas(); // ì „ì²´ uiStack Canvas ì¬ì •ë ¬
     }
 
-    public void InsertUIStack(UIBase ui, UIBase targetUI, Dictionary<UIOptionsKey, object> options = null) // uiStack ¿¡ insert
+    public void InsertUIStack(UIBase ui, UIBase targetUI, Dictionary<UIOptionsKey, object> options = null) // uiStack ì— insert
     {
-        RemoveUIStack(ui.uiName); // stack¿¡ ÀÌ¹Ì Á¸ÀçÇÏ¸é »­
+        RemoveUIStack(ui.uiName); // stackì— ì´ë¯¸ ì¡´ì¬í•˜ë©´ ëºŒ
 
         GetTopUI(true)?.OnBackendUI();
 
         GetUIStack().Insert(GetUIStack().IndexOf(targetUI), ui); // insert
-        SortAllUICanvas();  // ÀüÃ¼ uiStack Canvas ÀçÁ¤·Ä
+        SortAllUICanvas();  // ì „ì²´ uiStack Canvas ì¬ì •ë ¬
 
-        //¸®¼Ò½º ·Îµå ¿µÇâ ¾È¹Ş´Â ÇÔ¼ö
+        //ë¦¬ì†ŒìŠ¤ ë¡œë“œ ì˜í–¥ ì•ˆë°›ëŠ” í•¨ìˆ˜
         //ui.SetFrameBackground(options);
-        ui.SetBaseDataAtFirst(); //ÃÖÃÊ ÁøÀÔ ½Ã ÇÊ¿äÇÑ µ¥ÀÌÅÍ ¼¼ÆÃ
-        ui.Initialize(options); //°¢ uiÀÇ µ¥ÀÌÅÍ ÃÊ±âÈ­
+        ui.SetBaseDataAtFirst(); //ìµœì´ˆ ì§„ì… ì‹œ í•„ìš”í•œ ë°ì´í„° ì„¸íŒ…
+        ui.Initialize(options); //ê° uiì˜ ë°ì´í„° ì´ˆê¸°í™”
 
-        //¸®¼Ò½º ·Îµå ¹× »ı¼º, ¼¼ÆÃ
+        //ë¦¬ì†ŒìŠ¤ ë¡œë“œ ë° ìƒì„±, ì„¸íŒ…
         //ui.SetUIResources(() =>
         {
-            ui.FinishedShow(); // FinishedShow : ¸®¼Ò½º ·Îµå ¿Ï·á ÈÄ ui ¼¼ÆÃ ¸¶¹«¸® ÈÄ È°¼ºÈ­
+            ui.FinishedShow(); // FinishedShow : ë¦¬ì†ŒìŠ¤ ë¡œë“œ ì™„ë£Œ í›„ ui ì„¸íŒ… ë§ˆë¬´ë¦¬ í›„ í™œì„±í™”
         }
         //);
     }
@@ -257,7 +255,7 @@ public class UIManager : MonoSingleton<UIManager>
     }
 
     /// <summary>
-    /// UIPopupÀ» Æ÷ÇÔÇØ¼­ ÃÖ»ó´Ü UIBase¸®½ºÆ®
+    /// UIPopupì„ í¬í•¨í•´ì„œ ìµœìƒë‹¨ UIBaseë¦¬ìŠ¤íŠ¸
     /// </summary>
     /// <returns></returns>
     List<UIBase> PeekUIBaseList()
@@ -278,12 +276,12 @@ public class UIManager : MonoSingleton<UIManager>
 
         return result;
     }
-    UIBase PeekUIStack() // ÃÖ»óÀ§ ui peek
+    UIBase PeekUIStack() // ìµœìƒìœ„ ui peek
     {
         return GetUIStack().Count > 0 ? GetUIStack()[0] : null;
     }
 
-    UIBase PeekUIStack(int index) // index·Î uiStack³» ui°¡Á®¿È
+    UIBase PeekUIStack(int index) // indexë¡œ uiStackë‚´ uiê°€ì ¸ì˜´
     {
         if (GetUIStack().Count > 0)
         {
@@ -297,7 +295,7 @@ public class UIManager : MonoSingleton<UIManager>
             return null;
         }
     }
-    public void Remove(string uiName) // ÀÌ¸§À¸·Î uiStack³» ui»èÁ¦
+    public void Remove(string uiName) // ì´ë¦„ìœ¼ë¡œ uiStackë‚´ uiì‚­ì œ
     {
         UIBase ui = GetUI(uiName);
 
@@ -316,10 +314,10 @@ public class UIManager : MonoSingleton<UIManager>
             //        cachedUINames.Remove(uiName);
             //        cachedUINames.Add(uiName);
             //    }
-            //    if (cachedUINames.Count > MaxCachedUICount)    // Ä³½Ã UI ¸Æ½ºÄ¡ ³Ñ¾î°¡¸é
+            //    if (cachedUINames.Count > MaxCachedUICount)    // ìºì‹œ UI ë§¥ìŠ¤ì¹˜ ë„˜ì–´ê°€ë©´
             //    {
             //        string destroyUiName = cachedUINames[0];
-            //        if (!uiStack.Contains(cachedUIs[destroyUiName]))    // ÇöÀç ÄÑÁ®ÀÖÁö ¾ÊÀº UI¸¸(uiStack¿¡ ¾ø´Â°Å¸¸) »èÁ¦ (BackÀ» ÅëÇØ °¥ ¼ö ÀÖ±â¶§¹®¿¡ »èÁ¦ÇÏ¸é ¾ÈµÈ´Ù)
+            //        if (!uiStack.Contains(cachedUIs[destroyUiName]))    // í˜„ì¬ ì¼œì ¸ìˆì§€ ì•Šì€ UIë§Œ(uiStackì— ì—†ëŠ”ê±°ë§Œ) ì‚­ì œ (Backì„ í†µí•´ ê°ˆ ìˆ˜ ìˆê¸°ë•Œë¬¸ì— ì‚­ì œí•˜ë©´ ì•ˆëœë‹¤)
             //        {
             //            cachedUINames.RemoveAt(0);
             //            GameObject obj = cachedUIs[destroyUiName].gameObject;
@@ -345,7 +343,7 @@ public class UIManager : MonoSingleton<UIManager>
                         }
                     }
 
-                    //ÇöÀç Áö¿öÁö´Â UI°¡ ÆË¾÷ÀÏ°æ¿ì ÀÌÀü TOP UI°¡ ÆË¾÷ÀÏ °æ¿ì ÆË¾÷ÀÇ PlayBgm¸¦ ½ÇÇà½ÃÅ²´Ù.
+                    //í˜„ì¬ ì§€ì›Œì§€ëŠ” UIê°€ íŒì—…ì¼ê²½ìš° ì´ì „ TOP UIê°€ íŒì—…ì¼ ê²½ìš° íŒì—…ì˜ PlayBgmë¥¼ ì‹¤í–‰ì‹œí‚¨ë‹¤.
                     //if (ui is UIPopupBase)
                     //{
                     //    UIBase prevTopUI = GetTopUI(true) as UIPopupBase;
@@ -365,7 +363,7 @@ public class UIManager : MonoSingleton<UIManager>
         }
     }
 
-    public UIBase GetUI(string uiName) // ÀÌ¸§À¸·Î uiStack³» ui°¡Á®¿È
+    public UIBase GetUI(string uiName) // ì´ë¦„ìœ¼ë¡œ uiStackë‚´ uiê°€ì ¸ì˜´
     {
         for (int i = 0, count = GetUIStack().Count; i < count; ++i)
         {
@@ -379,8 +377,8 @@ public class UIManager : MonoSingleton<UIManager>
 
     //private void PlayPreviousBGM()
     //{
-    //    // ±âÁ¸ ÆË¾÷´İÇô¼­ »ç¿îµå 1ÃÊÁ¤µµ ³ª¿À´ÂÇö»ó ¸·±âÀ§ÇØ ·ÎºñÇÏ°í ÀüÅõ °¡Àå º£ÀÌ½º·Î ³»·Á°¬À»¶§
-    //    // bgm µô·¹ÀÌ 1ÃÊ°­Á¦·Î ÁØ´Ù.
+    //    // ê¸°ì¡´ íŒì—…ë‹«í˜€ì„œ ì‚¬ìš´ë“œ 1ì´ˆì •ë„ ë‚˜ì˜¤ëŠ”í˜„ìƒ ë§‰ê¸°ìœ„í•´ ë¡œë¹„í•˜ê³  ì „íˆ¬ ê°€ì¥ ë² ì´ìŠ¤ë¡œ ë‚´ë ¤ê°”ì„ë•Œ
+    //    // bgm ë”œë ˆì´ 1ì´ˆê°•ì œë¡œ ì¤€ë‹¤.
     //    bool delayBgm = false;
     //    if (GetUIStack().Count == 1)
     //    {
@@ -390,17 +388,17 @@ public class UIManager : MonoSingleton<UIManager>
 
     //    UIBase topUI = GetTopUI();
     //    if (topUI != null)
-    //        topUI.PlayBGM(delayBgm ? 1f : 0); // ÀÌÀü ui PlayBGM
+    //        topUI.PlayBGM(delayBgm ? 1f : 0); // ì´ì „ ui PlayBGM
 
-    //    ShowLobbyEffectMask(); // ·Îºñ¸é LobbyEffectMask Show
+    //    ShowLobbyEffectMask(); // ë¡œë¹„ë©´ LobbyEffectMask Show
     //}
 
-    //public void RemoveAll() // ÃÖ»ó´ÜUI¸¦ Á¦¿ÜÇÑ uiStack ³» ¸ğµç UI»èÁ¦. 
+    //public void RemoveAll() // ìµœìƒë‹¨UIë¥¼ ì œì™¸í•œ uiStack ë‚´ ëª¨ë“  UIì‚­ì œ. 
     //{
     //    if (GetUIStack().Count > 1)
     //    {
-    //        //ÃÖÇÏÀ§ UI »©°í UIStack Á¤º¸ Á¦°Å.
-    //        var tempUIStack = new List<UIBase>(GetUIStack().ToArray()); //±íÀº º¹»ç(¿øº»µ¥ÀÌÅÍ¸¦ »ç¿ëÇØ¼­ Á¦°Å¿Í ÂüÁ¶¸¦ µ¿½Ã¿¡ ÇÏ¸é À§ÇèÇÏ¹Ç·Î)
+    //        //ìµœí•˜ìœ„ UI ë¹¼ê³  UIStack ì •ë³´ ì œê±°.
+    //        var tempUIStack = new List<UIBase>(GetUIStack().ToArray()); //ê¹Šì€ ë³µì‚¬(ì›ë³¸ë°ì´í„°ë¥¼ ì‚¬ìš©í•´ì„œ ì œê±°ì™€ ì°¸ì¡°ë¥¼ ë™ì‹œì— í•˜ë©´ ìœ„í—˜í•˜ë¯€ë¡œ)
     //        for (int i = 0; i < tempUIStack.Count - 1; i++)
     //        {
     //            UIBase ui = GetUI(tempUIStack[i].uiName);
@@ -409,7 +407,7 @@ public class UIManager : MonoSingleton<UIManager>
     //            RemoveUIStack(ui.name);
     //        }
 
-    //        //¸ğµÎ Á¦°ÅÈÄ ÃÖ»óÀ§ UI Ã³¸®(¾Æ¸¶ ·ÎºñUI/¿ùµåUI/ÀüÅõUIÀÌÁö ¾ÊÀ»±î ½ÍÀ½)
+    //        //ëª¨ë‘ ì œê±°í›„ ìµœìƒìœ„ UI ì²˜ë¦¬(ì•„ë§ˆ ë¡œë¹„UI/ì›”ë“œUI/ì „íˆ¬UIì´ì§€ ì•Šì„ê¹Œ ì‹¶ìŒ)
     //        UIBase topUI = GetTopUI();
     //        if (topUI != null)
     //        {
@@ -423,7 +421,7 @@ public class UIManager : MonoSingleton<UIManager>
     //    }
     //}
 
-    /// <returns>uiStackÁß °¡Àå ÃÖ»ó´ÜÀÇ ui¸¦ °¡Á®¿È</returns>
+    /// <returns>uiStackì¤‘ ê°€ì¥ ìµœìƒë‹¨ì˜ uië¥¼ ê°€ì ¸ì˜´</returns>
     public UIBase GetTopUI(bool isIncludePopup = false) // 
     {
         UIBase ui = null;
@@ -458,7 +456,7 @@ public class UIManager : MonoSingleton<UIManager>
     }
     #endregion
 
-    public void SortAllUICanvas() // uiStack³» ÀüÃ¼ canvas sortingOrder ÀçÁ¤·Ä
+    public void SortAllUICanvas() // uiStackë‚´ ì „ì²´ canvas sortingOrder ì¬ì •ë ¬
     {
         int orderIdx = 0;
         for (int i = 0; i < GetUIStack().Count; i++)
@@ -468,10 +466,10 @@ public class UIManager : MonoSingleton<UIManager>
                 continue;
             }
 
-            GetUIStack()[i].UICanvas.planeDistance = distanceMax - (GetUIStack().Count - 1 - orderIdx) * distanceOffset; // stackÀÎµ¦½º¿¡ µû¶ó Ä«¸Ş¶ó°Å¸® Àû¿ë
-            GetUIStack()[i].UICanvas.sortingOrder = sortBase + (GetUIStack().Count - 1 - orderIdx) * sortOffset; // stackÀÎµ¦½º¿¡ µû¶ó ¼ÒÆ®°ª Àû¿ë
+            GetUIStack()[i].UICanvas.planeDistance = distanceMax - (GetUIStack().Count - 1 - orderIdx) * distanceOffset; // stackì¸ë±ìŠ¤ì— ë”°ë¼ ì¹´ë©”ë¼ê±°ë¦¬ ì ìš©
+            GetUIStack()[i].UICanvas.sortingOrder = sortBase + (GetUIStack().Count - 1 - orderIdx) * sortOffset; // stackì¸ë±ìŠ¤ì— ë”°ë¼ ì†ŒíŠ¸ê°’ ì ìš©
 
-            //if (GetUIStack()[i].EffBg != null) // ÀÌÆåÆ® ¹è°æ µé¾îÀÖÀ¸¸é ÀÌÆåÆ®µµ ¼ÒÆ® ÀçÁ¤·Ä
+            //if (GetUIStack()[i].EffBg != null) // ì´í™íŠ¸ ë°°ê²½ ë“¤ì–´ìˆìœ¼ë©´ ì´í™íŠ¸ë„ ì†ŒíŠ¸ ì¬ì •ë ¬
             //{
             //    for (int j = 0; j < GetUIStack()[i].EffBg.Length; j++)
             //    {
@@ -480,7 +478,7 @@ public class UIManager : MonoSingleton<UIManager>
             //    }
             //}
 
-            for (int j = 0; j < GetUIStack()[i].UISubCanvas.Count; j++) // ui³»¿¡ ´Ù¸¥ Sub CanvasµéÀÌ Á¸ÀçÇÏ¸é ÇØ´ç Canvasµéµµ stackÀÎµ¦½º¿¡ ¸Â°Ô ¼ÒÆ®°ª Àû¿ë
+            for (int j = 0; j < GetUIStack()[i].UISubCanvas.Count; j++) // uië‚´ì— ë‹¤ë¥¸ Sub Canvasë“¤ì´ ì¡´ì¬í•˜ë©´ í•´ë‹¹ Canvasë“¤ë„ stackì¸ë±ìŠ¤ì— ë§ê²Œ ì†ŒíŠ¸ê°’ ì ìš©
             {
                 GetUIStack()[i].UISubCanvas[j].sortingOrder = sortBase + (GetUIStack().Count - 1 - orderIdx) * sortOffset;
                 GetUIStack()[i].UISubCanvas[j].sortingOrder += GetUIStack()[i].UISubCanvasOriginSort[j];

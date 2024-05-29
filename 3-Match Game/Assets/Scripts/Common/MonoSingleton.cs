@@ -1,49 +1,65 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
-// MonoBehaviour¸¦ »ó¼Ó¹Ş´Â ¸ğ³ë½Ì±ÛÅæ Å¬·¡½ºÀÔ´Ï´Ù.
+///Â <summary>
+///Â InheritÂ fromÂ thisÂ baseÂ classÂ toÂ createÂ aÂ singleton.
+///Â e.g.Â publicÂ classÂ MyClassNameÂ :Â Singleton<MyClassName>Â {}
+///Â </summary>
 public class MonoSingleton<T> : MonoBehaviour where T : MonoBehaviour
 {
-    // À¯ÀÏÇÑ ÀÎ½ºÅÏ½º¸¦ ÀúÀåÇÒ Á¤Àû º¯¼öÀÔ´Ï´Ù.
-    private static T _instance;
+Â Â Â Â //Â CheckÂ toÂ seeÂ ifÂ we'reÂ aboutÂ toÂ beÂ destroyed
+Â Â Â Â private static bool m_ShuttingDown = false;
+    private static object m_Lock = new object();
+    private static T m_Instance;
 
-    // À¯ÀÏÇÑ ÀÎ½ºÅÏ½º¿¡ Á¢±ÙÇÒ ¼ö ÀÖ´Â ÇÁ·ÎÆÛÆ¼ÀÔ´Ï´Ù.
+    ///Â <summary>
+    Â Â Â Â ///Â AccessÂ singletonÂ instanceÂ throughÂ thisÂ propriety.
+    Â Â Â Â ///Â </summary>
     public static T Instance
     {
         get
         {
-            // ÀÎ½ºÅÏ½º°¡ ¾ø´Â °æ¿ì
-            if (_instance == null)
+            if (m_ShuttingDown)
             {
-                // ¾À¿¡¼­ ÇØ´ç Å¸ÀÔÀÇ ÀÎ½ºÅÏ½º¸¦ Ã£½À´Ï´Ù.
-                _instance = FindObjectOfType<T>();
-
-                // ¾À¿¡¼­ ÇØ´ç Å¸ÀÔÀÇ ÀÎ½ºÅÏ½º¸¦ Ã£Áö ¸øÇÑ °æ¿ì
-                if (_instance == null)
-                {
-                    // »õ·Î¿î °ÔÀÓ ¿ÀºêÁ§Æ®¸¦ »ı¼ºÇÏ°í ÇØ´ç Å¸ÀÔÀÇ ÄÄÆ÷³ÍÆ®¸¦ Ãß°¡ÇÕ´Ï´Ù.
-                    _instance = new GameObject("@" + typeof(T).Name,
-                                               typeof(T)).GetComponent<T>();
-                    DontDestroyOnLoad(_instance);
-                }
+                Debug.LogWarning("[Singleton]Â InstanceÂ '" + typeof(T) +
+                "'Â alreadyÂ destroyed.Â ReturningÂ null.");
+                return null;
             }
-            return _instance;
+
+            lock (m_Lock)
+            {
+                if (m_Instance == null)
+                {
+Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â //Â SearchÂ forÂ existingÂ instance.
+Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â m_Instance = (T)FindObjectOfType(typeof(T));
+
+                    //Â CreateÂ newÂ instanceÂ ifÂ oneÂ doesn'tÂ alreadyÂ exist.
+                    if (m_Instance == null)
+                    {
+Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â //Â NeedÂ toÂ createÂ aÂ newÂ GameObjectÂ toÂ attachÂ theÂ singletonÂ to.
+Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â var singletonObject = new GameObject();
+                        m_Instance = singletonObject.AddComponent<T>();
+                        singletonObject.name = typeof(T).ToString() + "Â (Singleton)";
+
+                        //Â MakeÂ instanceÂ persistent.
+                        DontDestroyOnLoad(singletonObject);
+                    }
+                }
+
+                return m_Instance;
+            }
         }
     }
 
-    // MonoBehaviourÀÇ Awake ¸Ş¼­µå¸¦ ÀçÁ¤ÀÇÇÕ´Ï´Ù.
-    protected virtual void Awake()
+    private void OnApplicationQuit()
     {
-        // ÀÎ½ºÅÏ½º°¡ ¾ø´Â °æ¿ì
-        if (_instance == null)
-        {
-            // ÇöÀç ÀÎ½ºÅÏ½º¸¦ ÇÒ´çÇÏ°í ¾À º¯°æ ½Ã ÆÄ±«µÇÁö ¾Êµµ·Ï ¼³Á¤ÇÕ´Ï´Ù.
-            _instance = this as T;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
-        {
-            // ÀÌ¹Ì ÀÎ½ºÅÏ½º°¡ ÀÖ´Â °æ¿ì Áßº¹µÈ ÀÎ½ºÅÏ½º¸¦ ÆÄ±«ÇÕ´Ï´Ù.
-            Destroy(gameObject);
-        }
+        m_ShuttingDown = true;
+    }
+
+
+    private void OnDestroy()
+    {
+        m_ShuttingDown = true;
     }
 }

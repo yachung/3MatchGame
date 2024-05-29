@@ -22,10 +22,14 @@ public class BoardManager : MonoSingleton<BoardManager>
     [Tooltip("우, 좌, 상, 하")]
     (int, int)[] directions = { (1, 0), (-1, 0), (0, 1), (0, -1) };
 
-    private void Start()
+    private void Awake()
     {
         allBgTiles = new GameObject[width, height];
         allDots = new Dot[width, height];
+    }
+
+    private void Start()
+    {
         SetBoard(width, height);
     }
 
@@ -47,6 +51,8 @@ public class BoardManager : MonoSingleton<BoardManager>
                 CreateDotTile(i, j);
             }
         }
+
+        AllTileCheck();
     }
 
     private void CreateBackGroundTile(int x, int y)
@@ -64,7 +70,6 @@ public class BoardManager : MonoSingleton<BoardManager>
         int dotToUse = UnityEngine.Random.Range(0, dots.Length);
         GameObject objDot = Instantiate(dots[dotToUse], tempPosition, Quaternion.identity);
         objDot.transform.SetParent(transform);
-        //objDot.name = $"({x}, {y})";
 
         Dot dot = objDot.GetComponent<Dot>();
         dot.tileType = (TileType)dotToUse;
@@ -76,51 +81,149 @@ public class BoardManager : MonoSingleton<BoardManager>
     {
         int curX = startTile.CurrentX;
         int curY = startTile.CurrentY;
+        Dot targetTile = new Dot();
 
-        Dot targetTile;
+        SwapDirection direction = SwapDirection.None;
 
         // Right Swipe
         if (swipeAngle > -45f && swipeAngle <= 45f && curX < width - 1)
         {
             targetTile = allDots[curX + 1, curY];
-            targetTile.CurrentX -= 1;
-            startTile.CurrentX += 1;
+            direction = SwapDirection.Right;
         }
         // Up Swipe
         else if (swipeAngle > 45f && swipeAngle <= 135f && curY < height - 1)
         {
             targetTile = allDots[curX, curY + 1];
-            targetTile.CurrentY -= 1;
-            startTile.CurrentY += 1;
+            direction = SwapDirection.Up;
         }
         // Left Swipe
         else if (swipeAngle > 135f || swipeAngle <= -135f && curX >= 0)
         {
             targetTile = allDots[curX - 1, curY];
-            targetTile.CurrentX += 1;
-            startTile.CurrentX -= 1;
+            direction = SwapDirection.Left;
         }
         // Down Swipe
         else if (swipeAngle > -135f && swipeAngle <= -45f && curY >= 0)
         {
             targetTile = allDots[curX, curY - 1];
-            targetTile.CurrentY += 1;
-            startTile.CurrentY -= 1;
+            direction = SwapDirection.Down;
+        }
+
+        switch (direction)
+        {
+            case SwapDirection.Right:
+                targetTile.CurrentX -= 1;
+                startTile.CurrentX += 1;
+                break;
+            case SwapDirection.Left:
+                targetTile.CurrentX += 1;
+                startTile.CurrentX -= 1;
+                break;
+
+            case SwapDirection.Up:
+                targetTile.CurrentY -= 1;
+                startTile.CurrentY += 1;
+                break;
+            case SwapDirection.Down:
+                targetTile.CurrentY += 1;
+                startTile.CurrentY -= 1;
+                break;
         }
     }
 
-    public void TileMatchCheck(Dot startTile)
-    {
-
-    }
-
     /*
-     * startX, startY 위치의 타일부터 BFS 실행
      * 
      */
 
-    public void BFS(int startX, int startY)
+    IEnumerator CoTileCheck()
     {
+        yield return new WaitUntil(() =>
+        {
+            return true;
+        });
+
+        AllTileCheck();
+    }
+
+    // 2번 실행되는중
+    public void AllTileCheck()
+    {
+        foreach (var dot in allDots)
+        {
+            if (MatchPossibilityCheck(dot.CurrentX, dot.CurrentY))
+            {
+                dot.isMatchable = true;
+
+                Color originColor = dot.GetComponent<SpriteRenderer>().color;
+                originColor.a = 0.1f;
+                dot.GetComponent<SpriteRenderer>().color = originColor;
+                //dot.GetComponent<SpriteRenderer>().enabled = false;
+            }
+            else
+                dot.isMatchable = false;
+        }
+    }
+
+    public bool MatchPossibilityCheck(int x, int y)
+    {
+        SwapDirection direction = SwapDirection.None;
+
+        foreach (var dir in directions)
+        {
+            int nX = x + dir.Item1;
+            int nY = y + dir.Item2;
+
+            // 유효한 좌표인지 확인
+            if (nX < 0 || nX >= width || nY < 0 || nY >= height || !allDots[nX, nY].isMovable)
+                continue;
+
+            // 체크하기 위해 임시로 타일 정보만 스왑
+            (allDots[x, y], allDots[nX, nY]) = (allDots[nX, nY], allDots[x, y]);
+
+            // 매칭 체크
+            bool isMatching = BFSMatchCheck(nX, nY, allDots[nX, nY].tileType);
+
+            // 체크 후 원위치
+            (allDots[x, y], allDots[nX, nY]) = (allDots[nX, nY], allDots[x, y]);
+
+            if (isMatching)
+            {
+                switch (dir)
+                {
+                    case (1, 0):
+                        direction = SwapDirection.Right;
+                        break;
+                    case (-1, 0):
+                        direction = SwapDirection.Left;
+                        break;
+                    case (0, 1):
+                        direction = SwapDirection.Up;
+                        break;
+                    case (0, -1):
+                        direction = SwapDirection.Down;
+                        break;
+                }
+
+                allDots[x, y].matchableDirection = direction;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /* 24.05.29
+     * 타일이 이동할때마다 CallBack으로 BFS를 돌려서 매칭체크를 했지만
+     * 이런 식으로 타일이 이동할 때만 매칭체크를 한다면 
+     * 전체 보드에서 매칭할 타일이 없는 경우를 체크하지 못함
+     * 그렇다면 결국 타일이 이동할때 마다 전체 보드의 각 타일마다 매칭 가능성 여부를 체크하는 함수가 돌아야 할 것 같다.
+     */
+
+    public bool BFSMatchCheck(int startX, int startY, TileType matchType)
+    {
+        bool isMatching = false;
+
         bool[,] visited = new bool[width, height];
         Queue<(int, int)> queue = new Queue<(int, int)>();
         HashSet<(int, int)> horizontalSet = new HashSet<(int, int)>();
@@ -141,14 +244,14 @@ public class BoardManager : MonoSingleton<BoardManager>
                 verticalSet.Add(current);
             else if (startY == current.Item2)
                 horizontalSet.Add(current);
-            
+
             foreach (var dir in directions)
             {
                 int nX = current.Item1 + dir.Item1;
                 int nY = current.Item2 + dir.Item2;
 
                 // IsValidMatch
-                if (nX < 0 || nX >= width || nY < 0 || nY >= height || !allDots[nX, nY].isMovable || allDots[nX, nY].tileType != allDots[startX, startY].tileType || visited[nX, nY])
+                if (nX < 0 || nX >= width || nY < 0 || nY >= height || !allDots[nX, nY].isMovable || allDots[nX, nY].tileType != matchType || visited[nX, nY])
                     continue;
 
                 queue.Enqueue((nX, nY));
@@ -160,31 +263,31 @@ public class BoardManager : MonoSingleton<BoardManager>
         {
             foreach (var dot in horizontalSet)
             {
-                Color originColor = allDots[dot.Item1, dot.Item2].GetComponent<SpriteRenderer>().color;
-
-                originColor.a = 0.1f;
-
-                allDots[dot.Item1, dot.Item2].GetComponent<SpriteRenderer>().color = originColor;
+                //Color originColor = allDots[dot.Item1, dot.Item2].GetComponent<SpriteRenderer>().color;
+                //originColor.a = 0.1f;
+                //allDots[dot.Item1, dot.Item2].GetComponent<SpriteRenderer>().color = originColor;
             }
+            isMatching = true;
         }
 
         if (verticalSet.Count >= 3)
         {
             foreach (var dot in verticalSet)
             {
-                Color originColor = allDots[dot.Item1, dot.Item2].GetComponent<SpriteRenderer>().color;
-
-                originColor.a = 0.1f;
-
-                allDots[dot.Item1, dot.Item2].GetComponent<SpriteRenderer>().color = originColor;
+                //Color originColor = allDots[dot.Item1, dot.Item2].GetComponent<SpriteRenderer>().color;
+                //originColor.a = 0.1f;
+                //allDots[dot.Item1, dot.Item2].GetComponent<SpriteRenderer>().color = originColor;
             }
+            isMatching = true;
         }
+
+        return isMatching;
     }
 
     public void DFS(int startX, int startY)
     {
         bool[,] visited = new bool[width, height];
-        Stack<(int, int)> stack = new Stack<(int, int)> ();
+        Stack<(int, int)> stack = new Stack<(int, int)>();
         List<(int, int)> matchedDotList = new List<(int, int)>();
 
         stack.Push((startX, startY));
@@ -251,7 +354,7 @@ public class BoardManager : MonoSingleton<BoardManager>
             }
             else
             {
-                
+
             }
             int nX = x + dir.Item1;
             int nY = y + dir.Item2;

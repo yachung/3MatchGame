@@ -19,4 +19,13 @@ namespace Const
         Teal,
         Yellow,
     }
+
+    public enum SwapDirection
+    {
+        None,
+        Right,
+        Left,
+        Up,
+        Down,
+    }
 }
