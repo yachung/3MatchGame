@@ -81,7 +81,7 @@ public class BoardManager : MonoSingleton<BoardManager>
     {
         int curX = startTile.CurrentX;
         int curY = startTile.CurrentY;
-        Dot targetTile = new Dot();
+        Dot targetTile = null;
 
         SwapDirection direction = SwapDirection.None;
 
@@ -110,6 +110,25 @@ public class BoardManager : MonoSingleton<BoardManager>
             direction = SwapDirection.Down;
         }
 
+        if (!targetTile.isMovable)
+            return;
+
+        //switch (direction)
+        //{
+        //    case SwapDirection.Right:
+        //    case SwapDirection.Left:
+        //        StartCoroutine(startTile.HorizontalMoveTiles(targetTile.CurrentX, () => 
+        //        {
+                    
+        //        }));
+        //        break;
+
+        //    case SwapDirection.Up:
+        //    case SwapDirection.Down:
+        //        StartCoroutine(startTile.VerticalMoveTiles(targetTile.CurrentY));
+        //        break;
+        //}
+
         switch (direction)
         {
             case SwapDirection.Right:
@@ -130,6 +149,8 @@ public class BoardManager : MonoSingleton<BoardManager>
                 startTile.CurrentY -= 1;
                 break;
         }
+
+        AllTileCheck();
     }
 
     /*
@@ -309,15 +330,6 @@ public class BoardManager : MonoSingleton<BoardManager>
                 if (nX < 0 || nX >= width || nY < 0 || nY >= height || !allDots[nX, nY].isMovable || allDots[nX, nY].tileType != allDots[startX, startY].tileType || visited[nX, nY])
                     continue;
 
-                if (dir.Item2 == 0)
-                {
-
-                }
-                else
-                {
-
-                }
-
                 stack.Push((nX, nY));
                 visited[nX, nY] = true;
             }
@@ -348,14 +360,6 @@ public class BoardManager : MonoSingleton<BoardManager>
         // 우, 좌, 상, 하
         foreach (var dir in directions)
         {
-            if (dir.Item2 == 0)
-            {
-
-            }
-            else
-            {
-
-            }
             int nX = x + dir.Item1;
             int nY = y + dir.Item2;
 

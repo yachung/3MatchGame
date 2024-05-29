@@ -31,8 +31,14 @@ public class Dot : MonoBehaviour
         {
             if (_currentX != value && isMovable)
             {
-                _currentX = value;
-                StartCoroutine(HorizontalMoveTiles(() => BoardManager.Instance.AllTileCheck()));
+                StartCoroutine(HorizontalMoveTiles(value, () => 
+                {
+                    if (isMatchable)
+                        _currentX = value;
+                    else
+                        StartCoroutine(HorizontalMoveTiles(CurrentX));
+                }));
+                //StartCoroutine(HorizontalMoveTiles(() => BoardManager.Instance.AllTileCheck()));
                 //StartCoroutine(HorizontalMoveTiles(() => BoardManager.Instance.MatchPossibilityCheck(CurrentX, CurrentY)));
             }
         }
@@ -45,8 +51,14 @@ public class Dot : MonoBehaviour
         {
             if (_currentY != value && isMovable)
             {
-                _currentY = value;
-                StartCoroutine(VerticalMoveTiles(() => BoardManager.Instance.AllTileCheck()));
+                StartCoroutine(VerticalMoveTiles(value, () =>
+                {
+                    if (isMatchable)
+                        _currentY = value;
+                    else
+                        StartCoroutine(VerticalMoveTiles(CurrentY));
+                }));
+                //StartCoroutine(VerticalMoveTiles(() => BoardManager.Instance.AllTileCheck()));
             }
         }
     }
@@ -73,14 +85,23 @@ public class Dot : MonoBehaviour
         MovedTiles();
     }
 
+    /*
+    * 마우스 놓으면 
+    * 터치거리 제한 체크
+    * 이동 각도 계산
+    * 타일 스왑 함수 실행
+    * 계산된 각도로 이동 방향 확인 및 범위 벗어나지 않는지 체크
+    * 
+    */
+
     private void MovedTiles()
     {
-        CalculateAngle();
-
         // 터치 거리 제한
         float distance = Vector2.Distance(finalTouchPosition, firstTouchPosition);
         if (distance < BoardManager.Instance.swipeThreshold)
             return;
+        
+        CalculateAngle();
 
         BoardManager.Instance.TileSwap(this, swipeAngle);
     }
@@ -91,7 +112,7 @@ public class Dot : MonoBehaviour
         swipeAngle = Mathf.Atan2(finalTouchPosition.y - firstTouchPosition.y, finalTouchPosition.x - firstTouchPosition.x) * Mathf.Rad2Deg;
     }
 
-    IEnumerator HorizontalMoveTiles(Action onComplete = null)
+    IEnumerator HorizontalMoveTiles(int CurrentX, Action onComplete = null)
     {
         while (true)
         {
@@ -117,7 +138,7 @@ public class Dot : MonoBehaviour
         onComplete?.Invoke();
     }
 
-    IEnumerator VerticalMoveTiles(Action onComplete = null)
+    IEnumerator VerticalMoveTiles(int CurrentY, Action onComplete = null)
     {
         while (true)
         {
