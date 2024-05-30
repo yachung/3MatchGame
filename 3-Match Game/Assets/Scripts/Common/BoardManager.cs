@@ -110,47 +110,82 @@ public class BoardManager : MonoSingleton<BoardManager>
             direction = SwapDirection.Down;
         }
 
-        if (!targetTile.isMovable)
+        if (targetTile == null)
             return;
 
-        //switch (direction)
-        //{
-        //    case SwapDirection.Right:
-        //    case SwapDirection.Left:
-        //        StartCoroutine(startTile.HorizontalMoveTiles(targetTile.CurrentX, () => 
-        //        {
-                    
-        //        }));
-        //        break;
+        startTile.Move(targetTile.CurrentX, targetTile.CurrentY, (isComplete) => { isNext1 = isComplete; });
+        targetTile.Move(startTile.CurrentX, startTile.CurrentY, (isComplete) => { isNext2 = isComplete; });
 
-        //    case SwapDirection.Up:
-        //    case SwapDirection.Down:
-        //        StartCoroutine(startTile.VerticalMoveTiles(targetTile.CurrentY));
-        //        break;
-        //}
-
-        switch (direction)
+        StartCoroutine(SwapCoroutine(() => 
         {
-            case SwapDirection.Right:
-                targetTile.CurrentX -= 1;
-                startTile.CurrentX += 1;
-                break;
-            case SwapDirection.Left:
-                targetTile.CurrentX += 1;
-                startTile.CurrentX -= 1;
-                break;
+            isNext1 = false;
+            isNext2 = false;
 
-            case SwapDirection.Up:
-                targetTile.CurrentY -= 1;
-                startTile.CurrentY += 1;
-                break;
-            case SwapDirection.Down:
-                targetTile.CurrentY += 1;
-                startTile.CurrentY -= 1;
-                break;
+            // 매칭 가능한 곳이면 정보 변경하고, 불가능한 곳이면 원위치 시킴.
+            if (targetTile.availableDirections.Contains(direction) || startTile.availableDirections.Contains(direction))
+            {
+                allDots[curX, curY] = targetTile;
+                allDots[targetTile.CurrentX, targetTile.CurrentY] = startTile;
+
+                switch (direction)
+                {
+                    case SwapDirection.Right:
+                        targetTile.CurrentX -= 1;
+                        startTile.CurrentX += 1;
+                        break;
+                    case SwapDirection.Left:
+                        targetTile.CurrentX += 1;
+                        startTile.CurrentX -= 1;
+                        break;
+
+                    case SwapDirection.Up:
+                        targetTile.CurrentY -= 1;
+                        startTile.CurrentY += 1;
+                        break;
+                    case SwapDirection.Down:
+                        targetTile.CurrentY += 1;
+                        startTile.CurrentY -= 1;
+                        break;
+                }
+
+                AllTileCheck();
+            }
+            else
+            {
+                StartCoroutine(startTile.MoveCoroutine(curX, curY));
+                StartCoroutine(targetTile.MoveCoroutine(targetTile.CurrentX, targetTile.CurrentY));
+            }
+        }));
+
+
+        //startTile.Move(targetTile.CurrentX, targetTile.CurrentY);
+        //targetTile.Move(curX, curY);
+
+
+    }
+
+    bool isNext1 = false;
+    bool isNext2 = false;
+
+    public void SwapFinish(Dot startTile, Dot targetTile)
+    {
+        if (isNext1 && isNext2)
+        {
+
         }
+    }
 
-        AllTileCheck();
+    IEnumerator SwapCoroutine(Action OnComplete)
+    {
+        yield return new WaitUntil(() =>
+        {
+            if (isNext1 && isNext2)
+                return true;    
+            else
+                return false;
+        });
+
+        OnComplete?.Invoke();
     }
 
     /*
@@ -176,10 +211,9 @@ public class BoardManager : MonoSingleton<BoardManager>
             {
                 dot.isMatchable = true;
 
-                Color originColor = dot.GetComponent<SpriteRenderer>().color;
-                originColor.a = 0.1f;
-                dot.GetComponent<SpriteRenderer>().color = originColor;
-                //dot.GetComponent<SpriteRenderer>().enabled = false;
+                //Color originColor = dot.GetComponent<SpriteRenderer>().color;
+                //originColor.a = 0.1f;
+                //dot.GetComponent<SpriteRenderer>().color = originColor;
             }
             else
                 dot.isMatchable = false;
@@ -189,6 +223,8 @@ public class BoardManager : MonoSingleton<BoardManager>
     public bool MatchPossibilityCheck(int x, int y)
     {
         SwapDirection direction = SwapDirection.None;
+
+        allDots[x, y].availableDirections.Clear();
 
         foreach (var dir in directions)
         {
@@ -226,12 +262,14 @@ public class BoardManager : MonoSingleton<BoardManager>
                         break;
                 }
 
-                allDots[x, y].matchableDirection = direction;
-                return true;
+                allDots[x, y].availableDirections.Add(direction);
             }
         }
 
-        return false;
+        if (allDots[x, y].availableDirections.Count > 0)
+            return true;
+        else
+            return false;
     }
 
     /* 24.05.29
