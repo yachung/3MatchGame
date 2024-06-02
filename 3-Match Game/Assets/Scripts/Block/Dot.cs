@@ -31,16 +31,6 @@ public class Dot : MonoBehaviour
         get => _currentX;
         set
         {
-            //if (_currentX != value && isMovable)
-            //{
-            //    StartCoroutine(HorizontalMoveTiles(value, (SwapDirection direction) => 
-            //    {
-            //        if (isMatchable && availableDirections.Contains(direction))
-            //            _currentX = value;
-            //        else
-            //            StartCoroutine(HorizontalMoveTiles(CurrentX));
-            //    }));
-            //}
             _currentX = value;
         }
     }
@@ -50,18 +40,25 @@ public class Dot : MonoBehaviour
         get => _currentY;
         set
         {
-            //if (_currentY != value && isMovable)
-            //{
-            //    StartCoroutine(VerticalMoveTiles(value, (SwapDirection direction) =>
-            //    {
-            //        if (isMatchable && availableDirections.Contains(direction))
-            //            _currentY = value;
-            //        else
-            //            StartCoroutine(VerticalMoveTiles(CurrentY));
-            //    }));
-            //}
             _currentY = value;
         }
+    }
+
+    public bool IsMoving { get; private set; }
+
+    public Vector2 GetPosition()
+    {
+        return transform.position;
+    }
+
+    public void SetPosition(Vector2 position)
+    {
+        transform.position = position;
+    }
+
+    public void SetMoving(bool isMoving)
+    {
+        IsMoving = isMoving;
     }
 
     private void Awake()
@@ -112,9 +109,7 @@ public class Dot : MonoBehaviour
         swipeAngle = Mathf.Atan2(finalTouchPosition.y - firstTouchPosition.y, finalTouchPosition.x - firstTouchPosition.x) * Mathf.Rad2Deg;
     }
 
-    private float speed = 6f;
-    private float displacement = 0.05f;
-    private IEnumerator _moveCoroutine = null;
+
 
     /*
 * 매칭 진행
@@ -122,99 +117,5 @@ public class Dot : MonoBehaviour
 * 
 */
 
-    #region Move
-    //IEnumerator HorizontalMoveTiles(int targetX, Action<SwapDirection> onComplete = null)
-    //{
-    //    SwapDirection direction = (targetX - transform.position.x > 0) ? SwapDirection.Right : SwapDirection.Left;
 
-    //    while (true)
-    //    {
-    //        // Move To Horizontal
-    //        if (Mathf.Abs(targetX - transform.position.x) > displacement)
-    //        {
-    //            targetPosition = new Vector2(targetX, transform.position.y);
-    //            transform.position = Vector2.Lerp(transform.position, targetPosition, speed * Time.deltaTime);
-
-    //            yield return null;
-    //        }
-    //        else
-    //        {
-    //            targetPosition = new Vector2(targetX, transform.position.y);
-    //            transform.position = targetPosition;
-    //            BoardManager.Instance.allDots[targetX, CurrentY] = this;
-    //            break;
-    //        }
-    //    }
-
-    //    yield return null;
-
-    //    onComplete?.Invoke(direction);
-    //}
-
-    //IEnumerator VerticalMoveTiles(int targetY, Action<SwapDirection> onComplete = null)
-    //{
-    //    SwapDirection direction = (targetY - transform.position.y > 0) ? SwapDirection.Up : SwapDirection.Down;
-
-    //    while (true)
-    //    {
-    //        // Move To Vertical
-    //        if (Mathf.Abs(targetY - transform.position.y) > displacement)
-    //        {
-    //            targetPosition = new Vector2(transform.position.x, targetY);
-    //            transform.position = Vector2.Lerp(transform.position, targetPosition, speed * Time.deltaTime);
-
-    //            yield return null;
-    //        }
-    //        else
-    //        {
-    //            targetPosition = new Vector2(transform.position.x, targetY);
-    //            transform.position = targetPosition;
-    //            BoardManager.Instance.allDots[CurrentX, targetY] = this;
-
-    //            break;
-    //        }
-    //    }
-
-    //    // 다른 타일의 코루틴도는것 대기
-    //    yield return null;
-
-    //    onComplete?.Invoke(direction);
-    //}
-    #endregion
-
-    public void Move(int targetX, int targetY, Action<bool> OnComplete = null)
-    {
-        if (_moveCoroutine != null)
-            return;
-
-        _moveCoroutine = MoveCoroutine(targetX, targetY, OnComplete);
-        StartCoroutine(_moveCoroutine);
-    }
-
-    public IEnumerator MoveCoroutine(int targetX, int targetY, Action<bool> OnComplete = null)
-    {
-        Vector2 targetPosition = new Vector2(targetX, targetY);
-
-        while (true)
-        {
-            if (Vector2.Distance(targetPosition, transform.position) > displacement)
-            {
-                transform.position = Vector2.Lerp(transform.position, targetPosition, speed * Time.deltaTime);
-
-                yield return null;
-            }
-            else
-            {
-                transform.position = targetPosition;
-                //BoardManager.Instance.allDots[targetX, CurrentY] = this;
-                break;
-            }
-        }
-
-        yield return null;
-
-        OnComplete?.Invoke(true);
-
-        _moveCoroutine = null;
-    }
 }

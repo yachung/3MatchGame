@@ -15,6 +15,8 @@ public class BoardManager : MonoSingleton<BoardManager>
     [SerializeField] private GameObject[] dots;
 
     [SerializeField] public float swipeThreshold = 0.5f;  // 터치 이동 최소 거리 임계값
+    [SerializeField] private float speed = 6f;
+    [SerializeField] private float displacement = 0.05f;
 
     public Dot[,] allDots { get; set; }
     private GameObject[,] allBgTiles;
@@ -98,13 +100,13 @@ public class BoardManager : MonoSingleton<BoardManager>
             direction = SwapDirection.Up;
         }
         // Left Swipe
-        else if (swipeAngle > 135f || swipeAngle <= -135f && curX >= 0)
+        else if ((swipeAngle > 135f || swipeAngle <= -135f) && curX > 0)
         {
             targetTile = allDots[curX - 1, curY];
             direction = SwapDirection.Left;
         }
         // Down Swipe
-        else if (swipeAngle > -135f && swipeAngle <= -45f && curY >= 0)
+        else if (swipeAngle > -135f && swipeAngle <= -45f && curY > 0)
         {
             targetTile = allDots[curX, curY - 1];
             direction = SwapDirection.Down;
@@ -113,108 +115,15 @@ public class BoardManager : MonoSingleton<BoardManager>
         if (targetTile == null)
             return;
 
-        startTile.Move(targetTile.CurrentX, targetTile.CurrentY, (isComplete) => { isNext1 = isComplete; });
-        targetTile.Move(startTile.CurrentX, startTile.CurrentY, (isComplete) => { isNext2 = isComplete; });
-
-        StartCoroutine(SwapCoroutine(() => 
-        {
-            isNext1 = false;
-            isNext2 = false;
-
-            // 매칭 가능한 곳이면 정보 변경하고, 불가능한 곳이면 원위치 시킴.
-            if (targetTile.availableDirections.Contains(direction) || startTile.availableDirections.Contains(direction))
-            {
-                allDots[curX, curY] = targetTile;
-                allDots[targetTile.CurrentX, targetTile.CurrentY] = startTile;
-
-                switch (direction)
-                {
-                    case SwapDirection.Right:
-                        targetTile.CurrentX -= 1;
-                        startTile.CurrentX += 1;
-                        break;
-                    case SwapDirection.Left:
-                        targetTile.CurrentX += 1;
-                        startTile.CurrentX -= 1;
-                        break;
-
-                    case SwapDirection.Up:
-                        targetTile.CurrentY -= 1;
-                        startTile.CurrentY += 1;
-                        break;
-                    case SwapDirection.Down:
-                        targetTile.CurrentY += 1;
-                        startTile.CurrentY -= 1;
-                        break;
-                }
-
-                AllTileCheck();
-            }
-            else
-            {
-                StartCoroutine(startTile.MoveCoroutine(curX, curY));
-                StartCoroutine(targetTile.MoveCoroutine(targetTile.CurrentX, targetTile.CurrentY));
-            }
-        }));
-
-
-        //startTile.Move(targetTile.CurrentX, targetTile.CurrentY);
-        //targetTile.Move(curX, curY);
-
-
+        SwapTiles(startTile, targetTile, direction);
     }
 
-    bool isNext1 = false;
-    bool isNext2 = false;
-
-    public void SwapFinish(Dot startTile, Dot targetTile)
-    {
-        if (isNext1 && isNext2)
-        {
-
-        }
-    }
-
-    IEnumerator SwapCoroutine(Action OnComplete)
-    {
-        yield return new WaitUntil(() =>
-        {
-            if (isNext1 && isNext2)
-                return true;    
-            else
-                return false;
-        });
-
-        OnComplete?.Invoke();
-    }
-
-    /*
-     * 
-     */
-
-    IEnumerator CoTileCheck()
-    {
-        yield return new WaitUntil(() =>
-        {
-            return true;
-        });
-
-        AllTileCheck();
-    }
-
-    // 2번 실행되는중
     public void AllTileCheck()
     {
         foreach (var dot in allDots)
         {
             if (MatchPossibilityCheck(dot.CurrentX, dot.CurrentY))
-            {
                 dot.isMatchable = true;
-
-                //Color originColor = dot.GetComponent<SpriteRenderer>().color;
-                //originColor.a = 0.1f;
-                //dot.GetComponent<SpriteRenderer>().color = originColor;
-            }
             else
                 dot.isMatchable = false;
         }
@@ -343,82 +252,122 @@ public class BoardManager : MonoSingleton<BoardManager>
         return isMatching;
     }
 
-    public void DFS(int startX, int startY)
+    public void SwapTiles(Dot startTile, Dot targetTile, SwapDirection direction, Action<bool> onComplete = null)
     {
-        bool[,] visited = new bool[width, height];
-        Stack<(int, int)> stack = new Stack<(int, int)>();
-        List<(int, int)> matchedDotList = new List<(int, int)>();
-
-        stack.Push((startX, startY));
-        visited[startX, startY] = true;
-
-        while (stack.Count != 0)
+        if (startTile.IsMoving || targetTile.IsMoving)
         {
-            (int, int) current = stack.Pop();
-            matchedDotList.Add(current);
-
-            foreach (var dir in directions)
-            {
-
-
-                int nX = current.Item1 + dir.Item1;
-                int nY = current.Item2 + dir.Item2;
-
-                // IsValidMatch
-                if (nX < 0 || nX >= width || nY < 0 || nY >= height || !allDots[nX, nY].isMovable || allDots[nX, nY].tileType != allDots[startX, startY].tileType || visited[nX, nY])
-                    continue;
-
-                stack.Push((nX, nY));
-                visited[nX, nY] = true;
-            }
+            Debug.Log($"startTile {startTile.GetPosition()} is {startTile.IsMoving}");
+            Debug.Log($"targetTile {targetTile.GetPosition()} is {targetTile.IsMoving}");
+            onComplete?.Invoke(false);
+            return;
         }
 
-        if (matchedDotList.Count >= 3)
-        {
-            foreach (var dot in matchedDotList)
-            {
-                Debug.Log($"매칭 좌표 : {dot.Item1}, {dot.Item2}");
-                //Color originColor = allDots[dot.Item1, dot.Item2].GetComponent<SpriteRenderer>().color;
-                //originColor.a = 0.1f;
-                //allDots[dot.Item1, dot.Item2].GetComponent<SpriteRenderer>().color = originColor;
-            }
-            Debug.Log("끝");
-        }
-        //RecursiveDfs(startX, startY, visited, matchedDotList);
+        StartCoroutine(SwapTilesCoroutine(startTile, targetTile, direction, onComplete));
     }
 
-    private void RecursiveDfs(int startX, int startY, bool[,] visited, List<(int, int)> dotList)
+    // 스왑방향을 타겟시점에서 보는 방향으로 바꾸는 함수 -> 방향을 반대로
+    private SwapDirection TargetDirection(SwapDirection direction)
     {
-        int x = startX;
-        int y = startY;
-
-        visited[x, y] = true;
-        dotList.Add((x, y));
-
-        // 우, 좌, 상, 하
-        foreach (var dir in directions)
+        switch (direction)
         {
-            int nX = x + dir.Item1;
-            int nY = y + dir.Item2;
+            case SwapDirection.Right:
+                direction = SwapDirection.Left;
+                break;
+            case SwapDirection.Left:
+                direction = SwapDirection.Right;
+                break;
+            case SwapDirection.Up:
+                direction = SwapDirection.Down;
+                break;
+            case SwapDirection.Down:
+                direction = SwapDirection.Up;
+                break;
+        }
 
-            if (nX < 0 || nX >= width || nY < 0 || nY >= height || !allDots[nX, nY].isMovable || allDots[nX, nY].tileType != allDots[startX, startY].tileType || visited[nX, nY])
+        return direction;
+    }
+
+    private IEnumerator SwapTilesCoroutine(Dot startTile, Dot targetTile, SwapDirection direction, Action<bool> onComplete = null)
+    {
+        startTile.SetMoving(true);
+        targetTile.SetMoving(true);
+
+        Vector2 startPosition = startTile.GetPosition();
+        Vector2 targetPosition = targetTile.GetPosition();
+
+        IEnumerator startToTarget = MoveTile(startTile, targetPosition);
+        IEnumerator targetToStart = MoveTile(targetTile, startPosition);
+
+        yield return StartCoroutine(MoveBothTiles(startToTarget, targetToStart));
+
+        bool isMatch = startTile.availableDirections.Contains(direction) || targetTile.availableDirections.Contains(TargetDirection(direction));
+
+        if (!isMatch)
+        {
+            startToTarget = MoveTile(startTile, startPosition);
+            targetToStart = MoveTile(targetTile, targetPosition);
+            yield return StartCoroutine(MoveBothTiles(startToTarget, targetToStart));
+        }
+        else
+        {
+            allDots[targetTile.CurrentX, targetTile.CurrentY] = startTile;
+            allDots[startTile.CurrentX, startTile.CurrentY] = targetTile;
+
+            switch (direction)
             {
-                if (dotList.Count >= 3)
-                {
-                    foreach (var dot in dotList)
-                    {
-                        Color originColor = allDots[dot.Item1, dot.Item2].GetComponent<SpriteRenderer>().color;
+                case SwapDirection.Right:
+                    targetTile.CurrentX -= 1;
+                    startTile.CurrentX += 1;
+                    break;
+                case SwapDirection.Left:
+                    targetTile.CurrentX += 1;
+                    startTile.CurrentX -= 1;
+                    break;
 
-                        originColor.a = 0.1f;
-
-                        allDots[dot.Item1, dot.Item2].GetComponent<SpriteRenderer>().color = originColor;
-                    }
-                }
-
-                continue;
+                case SwapDirection.Up:
+                    targetTile.CurrentY -= 1;
+                    startTile.CurrentY += 1;
+                    break;
+                case SwapDirection.Down:
+                    targetTile.CurrentY += 1;
+                    startTile.CurrentY -= 1;
+                    break;
             }
 
-            RecursiveDfs(nX, nY, visited, dotList);
+            AllTileCheck();
         }
+
+        startTile.SetMoving(false);
+        targetTile.SetMoving(false);
+
+        onComplete?.Invoke(isMatch);
+    }
+
+    private IEnumerator MoveBothTiles(IEnumerator startToTarget, IEnumerator targetToStart)
+    {
+        bool tile1Finished = false;
+        bool tile2Finished = false;
+
+        StartCoroutine(RunCoroutine(startToTarget, () => tile1Finished = true));
+        StartCoroutine(RunCoroutine(targetToStart, () => tile2Finished = true));
+
+        yield return new WaitUntil(() => tile1Finished && tile2Finished);
+    }
+
+    private IEnumerator RunCoroutine(IEnumerator coroutine, Action onComplete)
+    {
+        yield return StartCoroutine(coroutine);
+        onComplete?.Invoke();
+    }
+
+    private IEnumerator MoveTile(Dot tile, Vector2 targetPosition)
+    {
+        while (Vector2.Distance(targetPosition, tile.GetPosition()) > displacement)
+        {
+            tile.SetPosition(Vector2.Lerp(tile.GetPosition(), targetPosition, speed * Time.deltaTime));
+            yield return null;
+        }
+
+        tile.SetPosition(targetPosition);
     }
 }
