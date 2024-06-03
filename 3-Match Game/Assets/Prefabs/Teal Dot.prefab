@@ -115,7 +115,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b081f09029495424695a363172fb7bda, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _currentX: 0
+  _currentY: 0
+  tileClearAnimation: {fileID: 8116113097194662698, guid: 11c3d92d54f86284790d3a3c0ceb42b4, type: 3}
+  tileType: 0
   isMovable: 1
+  isMatchable: 0
 --- !u!1 &5067115868764240522
 GameObject:
   m_ObjectHideFlags: 0

@@ -11,18 +11,19 @@ public class Dot : MonoBehaviour
     [SerializeField] private int _currentX;
     [SerializeField] private int _currentY;
 
+    [SerializeField] private GameObject tileClearAnimation;
+
     public TileType tileType;
 
     public bool isMovable = true;                                  // 이동 가능한 타일인지
     public bool isMatchable = false;        // 매칭가능한 타일인지
 
-    public SwapDirection matchableDirection = SwapDirection.None;
+    //public HashSet<SwapDirection> availableDirections = new HashSet<SwapDirection>();
 
-    public HashSet<SwapDirection> availableDirections = new HashSet<SwapDirection>();
+    public Dictionary<SwapDirection, HashSet<(int, int)>> vaildMatchSet = new Dictionary<SwapDirection, HashSet<(int, int)>>(); 
 
     private Vector2 firstTouchPosition;
     private Vector2 finalTouchPosition;
-    private Vector2 targetPosition;                         // 타일이 이동할 목표 좌표
 
     private float swipeAngle;         // 이동 방향 각도
 
@@ -82,6 +83,12 @@ public class Dot : MonoBehaviour
         MovedTiles();
     }
 
+    // 터치 각도 계산
+    private void CalculateAngle()
+    {
+        swipeAngle = Mathf.Atan2(finalTouchPosition.y - firstTouchPosition.y, finalTouchPosition.x - firstTouchPosition.x) * Mathf.Rad2Deg;
+    }
+
     /*
     * 마우스 놓으면 
     * 터치거리 제한 체크
@@ -103,19 +110,14 @@ public class Dot : MonoBehaviour
         BoardManager.Instance.TileSwap(this, swipeAngle);
     }
 
-    // 터치 각도 계산
-    private void CalculateAngle()
+    public void RemoveTile()
     {
-        swipeAngle = Mathf.Atan2(finalTouchPosition.y - firstTouchPosition.y, finalTouchPosition.x - firstTouchPosition.x) * Mathf.Rad2Deg;
+        //if (tileClearAnimation != null)
+        //{
+        //    GameObject clearAnimation = Instantiate(tileClearAnimation, transform.position, Quaternion.identity);
+        //    clearAnimation.transform.SetParent(this.transform);
+        //}
+
+        Destroy(this);
     }
-
-
-
-    /*
-* 매칭 진행
-* 매칭 성공시 타일 삭제 진행
-* 
-*/
-
-
 }

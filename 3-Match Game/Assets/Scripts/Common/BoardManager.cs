@@ -4,6 +4,7 @@ using UnityEngine;
 using Const;
 using System;
 using UnityEditor.Search;
+using Unity.VisualScripting;
 
 public class BoardManager : MonoSingleton<BoardManager>
 {
@@ -17,6 +18,9 @@ public class BoardManager : MonoSingleton<BoardManager>
     [SerializeField] public float swipeThreshold = 0.5f;  // 터치 이동 최소 거리 임계값
     [SerializeField] private float speed = 6f;
     [SerializeField] private float displacement = 0.05f;
+
+    public Transform trTileObjectPool;
+    private List<Dot> tileObjectPool = new List<Dot>();
 
     public Dot[,] allDots { get; set; }
     private GameObject[,] allBgTiles;
@@ -118,22 +122,107 @@ public class BoardManager : MonoSingleton<BoardManager>
         SwapTiles(startTile, targetTile, direction);
     }
 
+    /*
+     * 전체 타일 검사해서 이미 매칭되어 있는 상태인지 확인
+     * 매칭되어 있는 상태라면 hashset에 저장하고 continue
+     * 매칭되어 있지 않은 상태라면 매칭가능성체크
+     * 전체 타일 체크가 끝나면 hashset에 저장된 타일들 제거후 다시 전체 타일 체크
+     * hashset의 count가 0이 될때까지 반복
+     */
     public void AllTileCheck()
     {
+        HashSet<(int, int)> matchSet = new HashSet<(int, int)>();
+
         foreach (var dot in allDots)
         {
+            if (!BFSMatchCheck(dot.CurrentX, dot.CurrentY, allDots[dot.CurrentX, dot.CurrentY].tileType, (set) => { matchSet.AddRange(set); }))
+                continue;
+
             if (MatchPossibilityCheck(dot.CurrentX, dot.CurrentY))
                 dot.isMatchable = true;
             else
                 dot.isMatchable = false;
         }
+
+        if (matchSet.Count > 0)
+            MatchTileRemove(matchSet);
+    }
+
+    private void MatchTileRemove(HashSet<(int, int)> matchSet)
+    {
+        // 매칭된 타일들 삭제
+        foreach (var tile in matchSet)
+        {
+            allDots[tile.Item1, tile.Item2].RemoveTile();
+        }
+
+        Dictionary<int, int> filledTileList = new Dictionary<int, int>();
+
+        // 루프 돌면서 매칭된 타일의 각 x좌표 별로 채울 타일 갯수 정리
+        foreach (var tile in matchSet)
+        {
+            if (filledTileList.ContainsKey(tile.Item1))
+                filledTileList[tile.Item1]++;
+            else
+                filledTileList.Add(tile.Item1, 1);
+        }
+
+        // 정리된 리스트에서 최소한 가장 낮은 위치에 있는 y좌표를 알고 있어야 해당 위치를 기준으로 남아있는 타일을 이동시킬수 있음.
+
+        // 기존 타일들 아래로 내리기
+        //foreach (var tileCount in filledTileList)
+        //{
+        //    for (int i = tileCount.Value; i > 0; --i)
+        //    {
+        //        allDots[tileCount.Key, i]
+        //    }
+        //}
+
+        // 차례대로 타일 생성
+        foreach (var tileCount in filledTileList)
+        {
+            for (int i = 0; i < tileCount.Value; ++i)
+            {
+                CreateDotTile(tileCount.Key, height - 1 - i);
+            }
+        }
+
+        // 매칭된 타일 삭제 후 타일 추가
+        //FilledTile(matchSet);
+
+        // 타일 추가 된 후에 전체 타일 재검사
+        AllTileCheck();
+    }
+
+    private void FilledTile(HashSet<(int, int)> matchSet)
+    {
+        Dictionary<int, int> filledTileList = new Dictionary<int, int>();
+
+        // 루프 돌면서 매칭된 타일의 각 x좌표 별로 채울 타일 갯수 정리
+        foreach (var tile in matchSet)
+        {
+            if (filledTileList.ContainsKey(tile.Item1))
+                filledTileList[tile.Item1]++;
+            else
+                filledTileList.Add(tile.Item1, 1);
+        }
+
+        foreach (var tileCount in filledTileList)
+        {
+            for (int i = 0; i < tileCount.Value; ++i)
+            {
+                CreateDotTile(tileCount.Key, height - 1 - i);
+            }
+        }
     }
 
     public bool MatchPossibilityCheck(int x, int y)
     {
+        HashSet<(int, int)> matchSet = new HashSet<(int, int)>();
+        
         SwapDirection direction = SwapDirection.None;
 
-        allDots[x, y].availableDirections.Clear();
+        allDots[x, y].vaildMatchSet.Clear();
 
         foreach (var dir in directions)
         {
@@ -148,7 +237,7 @@ public class BoardManager : MonoSingleton<BoardManager>
             (allDots[x, y], allDots[nX, nY]) = (allDots[nX, nY], allDots[x, y]);
 
             // 매칭 체크
-            bool isMatching = BFSMatchCheck(nX, nY, allDots[nX, nY].tileType);
+            bool isMatching = BFSMatchCheck(nX, nY, allDots[nX, nY].tileType, (set) => { matchSet = set; }) ;
 
             // 체크 후 원위치
             (allDots[x, y], allDots[nX, nY]) = (allDots[nX, nY], allDots[x, y]);
@@ -171,11 +260,11 @@ public class BoardManager : MonoSingleton<BoardManager>
                         break;
                 }
 
-                allDots[x, y].availableDirections.Add(direction);
+                allDots[x, y].vaildMatchSet.Add(direction, matchSet);
             }
         }
 
-        if (allDots[x, y].availableDirections.Count > 0)
+        if (allDots[x, y].vaildMatchSet.ContainsKey(direction))
             return true;
         else
             return false;
@@ -188,15 +277,15 @@ public class BoardManager : MonoSingleton<BoardManager>
      * 그렇다면 결국 타일이 이동할때 마다 전체 보드의 각 타일마다 매칭 가능성 여부를 체크하는 함수가 돌아야 할 것 같다.
      */
 
-    public bool BFSMatchCheck(int startX, int startY, TileType matchType)
+    private bool BFSMatchCheck(int startX, int startY, TileType matchType, Action<HashSet<(int, int)>> checkResult = null)
     {
-        bool isMatching = false;
+        bool isMatch = false;
 
         bool[,] visited = new bool[width, height];
         Queue<(int, int)> queue = new Queue<(int, int)>();
         HashSet<(int, int)> horizontalSet = new HashSet<(int, int)>();
         HashSet<(int, int)> verticalSet = new HashSet<(int, int)>();
-        //List<(int, int)> matchedDotList = new List<(int, int)>();
+        HashSet<(int, int)> matchedSet = new HashSet<(int, int)>();
 
         queue.Enqueue((startX, startY));
         visited[startX, startY] = true;
@@ -229,27 +318,21 @@ public class BoardManager : MonoSingleton<BoardManager>
 
         if (horizontalSet.Count >= 3)
         {
-            foreach (var dot in horizontalSet)
-            {
-                //Color originColor = allDots[dot.Item1, dot.Item2].GetComponent<SpriteRenderer>().color;
-                //originColor.a = 0.1f;
-                //allDots[dot.Item1, dot.Item2].GetComponent<SpriteRenderer>().color = originColor;
-            }
-            isMatching = true;
+            matchedSet.AddRange(horizontalSet);
+
+            isMatch = true;
         }
 
         if (verticalSet.Count >= 3)
         {
-            foreach (var dot in verticalSet)
-            {
-                //Color originColor = allDots[dot.Item1, dot.Item2].GetComponent<SpriteRenderer>().color;
-                //originColor.a = 0.1f;
-                //allDots[dot.Item1, dot.Item2].GetComponent<SpriteRenderer>().color = originColor;
-            }
-            isMatching = true;
+            matchedSet.AddRange(verticalSet);
+
+            isMatch = true;
         }
 
-        return isMatching;
+        checkResult?.Invoke(matchedSet);
+
+        return isMatch;
     }
 
     public void SwapTiles(Dot startTile, Dot targetTile, SwapDirection direction, Action<bool> onComplete = null)
@@ -295,12 +378,14 @@ public class BoardManager : MonoSingleton<BoardManager>
         Vector2 startPosition = startTile.GetPosition();
         Vector2 targetPosition = targetTile.GetPosition();
 
+        SwapDirection targetDirection = TargetDirection(direction);
+
         IEnumerator startToTarget = MoveTile(startTile, targetPosition);
         IEnumerator targetToStart = MoveTile(targetTile, startPosition);
 
         yield return StartCoroutine(MoveBothTiles(startToTarget, targetToStart));
-
-        bool isMatch = startTile.availableDirections.Contains(direction) || targetTile.availableDirections.Contains(TargetDirection(direction));
+        
+        bool isMatch = startTile.vaildMatchSet.ContainsKey(direction) || targetTile.vaildMatchSet.ContainsKey(targetDirection);
 
         if (!isMatch)
         {
@@ -310,6 +395,7 @@ public class BoardManager : MonoSingleton<BoardManager>
         }
         else
         {
+            // 매칭 성공시 좌표정보 교환
             allDots[targetTile.CurrentX, targetTile.CurrentY] = startTile;
             allDots[startTile.CurrentX, startTile.CurrentY] = targetTile;
 
@@ -334,7 +420,16 @@ public class BoardManager : MonoSingleton<BoardManager>
                     break;
             }
 
-            AllTileCheck();
+            HashSet<(int, int)> matchSet = new HashSet<(int, int)> ();
+
+            // 매칭된 타일 합체
+            if (startTile.vaildMatchSet.ContainsKey(direction))
+                matchSet.AddRange(startTile.vaildMatchSet[direction]);
+            if (targetTile.vaildMatchSet.ContainsKey(targetDirection))
+                matchSet.AddRange(targetTile.vaildMatchSet[direction]);
+
+            // 매칭된 타일 삭제
+            MatchTileRemove(matchSet);
         }
 
         startTile.SetMoving(false);
