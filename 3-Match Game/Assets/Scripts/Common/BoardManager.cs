@@ -135,7 +135,7 @@ public class BoardManager : MonoSingleton<BoardManager>
 
         foreach (var dot in allDots)
         {
-            if (!BFSMatchCheck(dot.CurrentX, dot.CurrentY, allDots[dot.CurrentX, dot.CurrentY].tileType, (set) => { matchSet.AddRange(set); }))
+            if (BFSMatchCheck(dot.CurrentX, dot.CurrentY, allDots[dot.CurrentX, dot.CurrentY].tileType, (set) => { matchSet.AddRange(set); }))
                 continue;
 
             if (MatchPossibilityCheck(dot.CurrentX, dot.CurrentY))
@@ -151,47 +151,59 @@ public class BoardManager : MonoSingleton<BoardManager>
     private void MatchTileRemove(HashSet<(int, int)> matchSet)
     {
         // 매칭된 타일들 삭제
-        foreach (var tile in matchSet)
+        foreach (var (x, y) in matchSet)
         {
-            allDots[tile.Item1, tile.Item2].RemoveTile();
+            allDots[x, y].RemoveTile();
         }
 
-        Dictionary<int, int> filledTileList = new Dictionary<int, int>();
+        // Key : x좌표 , Value : (x좌표에서 매칭된 타일갯수, 최소 y좌표)
+        Dictionary<int, (int count, int minY)> matchTileDataList = new Dictionary<int, (int, int)>();
 
         // 루프 돌면서 매칭된 타일의 각 x좌표 별로 채울 타일 갯수 정리
-        foreach (var tile in matchSet)
+        foreach (var (xPos, yPos) in matchSet)
         {
-            if (filledTileList.ContainsKey(tile.Item1))
-                filledTileList[tile.Item1]++;
+            if (matchTileDataList.ContainsKey(xPos))
+            {
+                var currentData = matchTileDataList[xPos];
+                matchTileDataList[xPos] = (currentData.count + 1, Math.Min(currentData.minY, yPos));
+            }
             else
-                filledTileList.Add(tile.Item1, 1);
+                matchTileDataList.Add(xPos, (1, yPos));
         }
 
         // 정리된 리스트에서 최소한 가장 낮은 위치에 있는 y좌표를 알고 있어야 해당 위치를 기준으로 남아있는 타일을 이동시킬수 있음.
+        // 남아있는 타일과 해당 타일이 이동할 위치리스트
+        HashSet<(Dot, Vector2)> tileTargetList = new HashSet<(Dot, Vector2)>();
 
-        // 기존 타일들 아래로 내리기
-        //foreach (var tileCount in filledTileList)
-        //{
-        //    for (int i = tileCount.Value; i > 0; --i)
-        //    {
-        //        allDots[tileCount.Key, i]
-        //    }
-        //}
-
-        // 차례대로 타일 생성
-        foreach (var tileCount in filledTileList)
+        foreach (var tileMatchData in matchTileDataList)
         {
-            for (int i = 0; i < tileCount.Value; ++i)
+            int startY = tileMatchData.Value.count + tileMatchData.Value.minY;
+            int targetY = tileMatchData.Value.minY;
+            for (int i = startY; i < height; ++i)
             {
-                CreateDotTile(tileCount.Key, height - 1 - i);
+                tileTargetList.Add((allDots[tileMatchData.Key, i], new Vector2(tileMatchData.Key, targetY)));
+                allDots[tileMatchData.Key, targetY] = allDots[tileMatchData.Key, i];
+                allDots[tileMatchData.Key, i] = null;
+                allDots[tileMatchData.Key, targetY].CurrentX = tileMatchData.Key;
+                allDots[tileMatchData.Key, targetY].CurrentY = targetY;
+                targetY++;
             }
         }
 
-        // 매칭된 타일 삭제 후 타일 추가
-        //FilledTile(matchSet);
+        StartCoroutine(RunCoroutine(MoveTile(tileTargetList), () =>
+        {
+            // 차례대로 타일 생성
+            foreach (var tileMatchData in matchTileDataList)
+            {
+                for (int i = 0; i < tileMatchData.Value.count; ++i)
+                {
+                    CreateDotTile(tileMatchData.Key, height - 1 - i);
+                }
+            }
 
-        // 타일 추가 된 후에 전체 타일 재검사
-        AllTileCheck();
+            // 타일 추가 된 후에 전체 타일 재검사
+            AllTileCheck();
+        }));
     }
 
     private void FilledTile(HashSet<(int, int)> matchSet)
@@ -426,7 +438,7 @@ public class BoardManager : MonoSingleton<BoardManager>
             if (startTile.vaildMatchSet.ContainsKey(direction))
                 matchSet.AddRange(startTile.vaildMatchSet[direction]);
             if (targetTile.vaildMatchSet.ContainsKey(targetDirection))
-                matchSet.AddRange(targetTile.vaildMatchSet[direction]);
+                matchSet.AddRange(targetTile.vaildMatchSet[targetDirection]);
 
             // 매칭된 타일 삭제
             MatchTileRemove(matchSet);
@@ -464,5 +476,18 @@ public class BoardManager : MonoSingleton<BoardManager>
         }
 
         tile.SetPosition(targetPosition);
+    }
+
+    private IEnumerator MoveTile(HashSet<(Dot, Vector2)> tileTargetList)
+    {
+        List<Coroutine> list = new List<Coroutine>();
+
+        // 코루틴 시작하고 리스트에 저장
+        foreach (var (tile, targetPosition) in tileTargetList)
+            list.Add(StartCoroutine(MoveTile(tile, targetPosition)));
+
+        // 리스트에 저장된 코루틴들 전부 끝날때 까지 대기
+        foreach (var coroutine in list)
+            yield return coroutine;
     }
 }

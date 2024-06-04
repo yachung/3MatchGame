@@ -118,6 +118,8 @@ public class Dot : MonoBehaviour
         //    clearAnimation.transform.SetParent(this.transform);
         //}
 
-        Destroy(this);
+        if (IsMoving)
+            Debug.Log($"IsMoving is {true}");
+        Destroy(this.gameObject);
     }
 }
