@@ -5,6 +5,7 @@ using Const;
 using System;
 using UnityEditor.Search;
 using Unity.VisualScripting;
+using System.Linq;
 
 public class BoardManager : MonoSingleton<BoardManager>
 {
@@ -82,45 +83,7 @@ public class BoardManager : MonoSingleton<BoardManager>
         allDots[x, y] = dot;
     }
 
-    // 타일 방향 계산해서 스왑
-    public void TileSwap(Dot startTile, float swipeAngle)
-    {
-        int curX = startTile.CurrentX;
-        int curY = startTile.CurrentY;
-        Dot targetTile = null;
 
-        SwapDirection direction = SwapDirection.None;
-
-        // Right Swipe
-        if (swipeAngle > -45f && swipeAngle <= 45f && curX < width - 1)
-        {
-            targetTile = allDots[curX + 1, curY];
-            direction = SwapDirection.Right;
-        }
-        // Up Swipe
-        else if (swipeAngle > 45f && swipeAngle <= 135f && curY < height - 1)
-        {
-            targetTile = allDots[curX, curY + 1];
-            direction = SwapDirection.Up;
-        }
-        // Left Swipe
-        else if ((swipeAngle > 135f || swipeAngle <= -135f) && curX > 0)
-        {
-            targetTile = allDots[curX - 1, curY];
-            direction = SwapDirection.Left;
-        }
-        // Down Swipe
-        else if (swipeAngle > -135f && swipeAngle <= -45f && curY > 0)
-        {
-            targetTile = allDots[curX, curY - 1];
-            direction = SwapDirection.Down;
-        }
-
-        if (targetTile == null)
-            return;
-
-        SwapTiles(startTile, targetTile, direction);
-    }
 
     /*
      * 전체 타일 검사해서 이미 매칭되어 있는 상태인지 확인
@@ -154,33 +117,38 @@ public class BoardManager : MonoSingleton<BoardManager>
         foreach (var (x, y) in matchSet)
         {
             allDots[x, y].RemoveTile();
+            allDots[x, y] = null;
         }
 
         // Key : x좌표 , Value : (x좌표에서 매칭된 타일갯수, 최소 y좌표)
-        Dictionary<int, (int count, int minY)> matchTileDataList = new Dictionary<int, (int, int)>();
+        Dictionary<int, List<int>> matchTileDataList = new Dictionary<int, List<int>>();
 
         // 루프 돌면서 매칭된 타일의 각 x좌표 별로 채울 타일 갯수 정리
         foreach (var (xPos, yPos) in matchSet)
         {
             if (matchTileDataList.ContainsKey(xPos))
             {
-                var currentData = matchTileDataList[xPos];
-                matchTileDataList[xPos] = (currentData.count + 1, Math.Min(currentData.minY, yPos));
+                matchTileDataList[xPos].Add(yPos);
             }
             else
-                matchTileDataList.Add(xPos, (1, yPos));
+                matchTileDataList.Add(xPos, new List<int> { yPos });
         }
 
         // 정리된 리스트에서 최소한 가장 낮은 위치에 있는 y좌표를 알고 있어야 해당 위치를 기준으로 남아있는 타일을 이동시킬수 있음.
+
         // 남아있는 타일과 해당 타일이 이동할 위치리스트
         HashSet<(Dot, Vector2)> tileTargetList = new HashSet<(Dot, Vector2)>();
 
         foreach (var tileMatchData in matchTileDataList)
         {
-            int startY = tileMatchData.Value.count + tileMatchData.Value.minY;
-            int targetY = tileMatchData.Value.minY;
-            for (int i = startY; i < height; ++i)
+            
+            int targetY = tileMatchData.Value.Min();    // 이동할 Y좌표
+            int minY = tileMatchData.Value.Min() + 1;   // Y좌표 최소값
+            for (int i = minY; i < height; ++i)
             {
+                if (allDots[tileMatchData.Key, i] == null)
+                    continue;
+
                 tileTargetList.Add((allDots[tileMatchData.Key, i], new Vector2(tileMatchData.Key, targetY)));
                 allDots[tileMatchData.Key, targetY] = allDots[tileMatchData.Key, i];
                 allDots[tileMatchData.Key, i] = null;
@@ -195,39 +163,25 @@ public class BoardManager : MonoSingleton<BoardManager>
             // 차례대로 타일 생성
             foreach (var tileMatchData in matchTileDataList)
             {
-                for (int i = 0; i < tileMatchData.Value.count; ++i)
+                for (int i = 0; i < tileMatchData.Value.Count; ++i)
                 {
                     CreateDotTile(tileMatchData.Key, height - 1 - i);
                 }
             }
 
+            foreach (var dot in allDots)
+            {
+                if (dot == null)
+                {
+                    Debug.Log("");
+                }
+            }
             // 타일 추가 된 후에 전체 타일 재검사
             AllTileCheck();
         }));
     }
 
-    private void FilledTile(HashSet<(int, int)> matchSet)
-    {
-        Dictionary<int, int> filledTileList = new Dictionary<int, int>();
-
-        // 루프 돌면서 매칭된 타일의 각 x좌표 별로 채울 타일 갯수 정리
-        foreach (var tile in matchSet)
-        {
-            if (filledTileList.ContainsKey(tile.Item1))
-                filledTileList[tile.Item1]++;
-            else
-                filledTileList.Add(tile.Item1, 1);
-        }
-
-        foreach (var tileCount in filledTileList)
-        {
-            for (int i = 0; i < tileCount.Value; ++i)
-            {
-                CreateDotTile(tileCount.Key, height - 1 - i);
-            }
-        }
-    }
-
+    // 각 타일의 매칭 가능성을 체크해서 타일마다 매칭 가능한 방향과 매칭시 매칭되는 타일의 좌표를 저장
     public bool MatchPossibilityCheck(int x, int y)
     {
         HashSet<(int, int)> matchSet = new HashSet<(int, int)>();
@@ -319,8 +273,16 @@ public class BoardManager : MonoSingleton<BoardManager>
                 int nX = current.Item1 + dir.Item1;
                 int nY = current.Item2 + dir.Item2;
 
+                if (nX < 0 || nX >= width || nY < 0 || nY >= height || visited[nX, nY])
+                    continue;
+
                 // IsValidMatch
-                if (nX < 0 || nX >= width || nY < 0 || nY >= height || !allDots[nX, nY].isMovable || allDots[nX, nY].tileType != matchType || visited[nX, nY])
+                if (allDots[nX, nY] == null)
+                {
+                    Debug.Log($"Dot {nX}, {nY} is null");
+                    continue;
+                }
+                if (!allDots[nX, nY].isMovable || allDots[nX, nY].tileType != matchType)
                     continue;
 
                 queue.Enqueue((nX, nY));
@@ -347,19 +309,7 @@ public class BoardManager : MonoSingleton<BoardManager>
         return isMatch;
     }
 
-    public void SwapTiles(Dot startTile, Dot targetTile, SwapDirection direction, Action<bool> onComplete = null)
-    {
-        if (startTile.IsMoving || targetTile.IsMoving)
-        {
-            Debug.Log($"startTile {startTile.GetPosition()} is {startTile.IsMoving}");
-            Debug.Log($"targetTile {targetTile.GetPosition()} is {targetTile.IsMoving}");
-            onComplete?.Invoke(false);
-            return;
-        }
-
-        StartCoroutine(SwapTilesCoroutine(startTile, targetTile, direction, onComplete));
-    }
-
+    #region SwapFunction
     // 스왑방향을 타겟시점에서 보는 방향으로 바꾸는 함수 -> 방향을 반대로
     private SwapDirection TargetDirection(SwapDirection direction)
     {
@@ -381,6 +331,61 @@ public class BoardManager : MonoSingleton<BoardManager>
 
         return direction;
     }
+
+    // 타일 방향 계산해서 스왑
+    public void TileSwap(Dot startTile, float swipeAngle)
+    {
+        int curX = startTile.CurrentX;
+        int curY = startTile.CurrentY;
+        Dot targetTile = null;
+
+        SwapDirection direction = SwapDirection.None;
+
+        // Right Swipe
+        if (swipeAngle > -45f && swipeAngle <= 45f && curX < width - 1)
+        {
+            targetTile = allDots[curX + 1, curY];
+            direction = SwapDirection.Right;
+        }
+        // Up Swipe
+        else if (swipeAngle > 45f && swipeAngle <= 135f && curY < height - 1)
+        {
+            targetTile = allDots[curX, curY + 1];
+            direction = SwapDirection.Up;
+        }
+        // Left Swipe
+        else if ((swipeAngle > 135f || swipeAngle <= -135f) && curX > 0)
+        {
+            targetTile = allDots[curX - 1, curY];
+            direction = SwapDirection.Left;
+        }
+        // Down Swipe
+        else if (swipeAngle > -135f && swipeAngle <= -45f && curY > 0)
+        {
+            targetTile = allDots[curX, curY - 1];
+            direction = SwapDirection.Down;
+        }
+
+        if (targetTile == null)
+            return;
+
+        SwapTiles(startTile, targetTile, direction);
+    }
+
+    public void SwapTiles(Dot startTile, Dot targetTile, SwapDirection direction, Action<bool> onComplete = null)
+    {
+        if (startTile.IsMoving || targetTile.IsMoving)
+        {
+            Debug.Log($"startTile {startTile.GetPosition()} is {startTile.IsMoving}");
+            Debug.Log($"targetTile {targetTile.GetPosition()} is {targetTile.IsMoving}");
+            onComplete?.Invoke(false);
+            return;
+        }
+
+        StartCoroutine(SwapTilesCoroutine(startTile, targetTile, direction, onComplete));
+    }
+
+
 
     private IEnumerator SwapTilesCoroutine(Dot startTile, Dot targetTile, SwapDirection direction, Action<bool> onComplete = null)
     {
@@ -460,6 +465,8 @@ public class BoardManager : MonoSingleton<BoardManager>
 
         yield return new WaitUntil(() => tile1Finished && tile2Finished);
     }
+
+    #endregion
 
     private IEnumerator RunCoroutine(IEnumerator coroutine, Action onComplete)
     {
