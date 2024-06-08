@@ -1,9 +1,6 @@
 using Const;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System;
-using UnityEditor.Experimental.GraphView;
 
 public class Dot : MonoBehaviour
 {
@@ -11,14 +8,16 @@ public class Dot : MonoBehaviour
     [SerializeField] private int _currentX;
     [SerializeField] private int _currentY;
 
+    [SerializeField] private SpriteRenderer tileImage;
+
     [SerializeField] private GameObject tileClearAnimation;
+
+    private int score = 10;
 
     public TileType tileType;
 
     public bool isMovable = true;                                  // 이동 가능한 타일인지
-    public bool isMatchable = false;        // 매칭가능한 타일인지
-
-    //public HashSet<SwapDirection> availableDirections = new HashSet<SwapDirection>();
+    public bool isMatchable = false;                               // 매칭가능한 타일인지
 
     public Dictionary<SwapDirection, HashSet<(int, int)>> vaildMatchSet = new Dictionary<SwapDirection, HashSet<(int, int)>>(); 
 
@@ -27,6 +26,7 @@ public class Dot : MonoBehaviour
 
     private float swipeAngle;         // 이동 방향 각도
 
+    #region Property
     public int CurrentX
     {
         get => _currentX;
@@ -61,6 +61,7 @@ public class Dot : MonoBehaviour
     {
         IsMoving = isMoving;
     }
+    #endregion
 
     private void Awake()
     {
@@ -69,6 +70,24 @@ public class Dot : MonoBehaviour
         _currentY = (int)transform.position.y;
         // property로 초기화를 하게 되면 CurrentY가 설정되기 전에 CurrentX의 Set 함수가 호출되면서 초기화가 꼬이게 됨.
         // 따라서 초기화는 필드로 초기화하거나 구조체로 묶어서 한번에 초기화 시키는 등의 방법을 사용해야한다.
+
+        if (tileImage == null)
+            tileImage = GetComponent<SpriteRenderer>();
+    }
+
+    private ObjectPool pool;
+
+    //void Start()
+    //{
+    //    pool = FindObjectOfType<ObjectPool>();
+    //}
+
+    public void Initialize(Vector2 position)
+    {
+        SetPosition(position);
+
+        _currentX = (int)transform.position.x;
+        _currentY = (int)transform.position.y;
     }
 
     private void OnMouseDown()
@@ -83,20 +102,16 @@ public class Dot : MonoBehaviour
         MovedTiles();
     }
 
+    public void SetColor(string colorHex)
+    {
+        tileImage.color = Utils.GetColorByHex(colorHex);
+    }
+
     // 터치 각도 계산
     private void CalculateAngle()
     {
         swipeAngle = Mathf.Atan2(finalTouchPosition.y - firstTouchPosition.y, finalTouchPosition.x - firstTouchPosition.x) * Mathf.Rad2Deg;
     }
-
-    /*
-    * 마우스 놓으면 
-    * 터치거리 제한 체크
-    * 이동 각도 계산
-    * 타일 스왑 함수 실행
-    * 계산된 각도로 이동 방향 확인 및 범위 벗어나지 않는지 체크
-    * 
-    */
 
     private void MovedTiles()
     {
@@ -118,8 +133,8 @@ public class Dot : MonoBehaviour
         //    clearAnimation.transform.SetParent(this.transform);
         //}
 
-        if (IsMoving)
-            Debug.Log($"IsMoving is {true}");
-        Destroy(this.gameObject);
+        ObjectPoolingManager.Instance.ReturnObject("Tile", this.gameObject);
+
+        //Destroy(this.gameObject);
     }
 }

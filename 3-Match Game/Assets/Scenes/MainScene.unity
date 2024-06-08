@@ -152,9 +152,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ef2fa3bfb7a4a8045a0aeebe7881513b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  width: 6
-  height: 10
-  backGroundBlock: {fileID: 8116113097194662698, guid: 71ac32577ad98904abdd706139c15a31, type: 3}
+  width: 12
+  height: 20
+  backGroundTile: {fileID: 8116113097194662698, guid: 71ac32577ad98904abdd706139c15a31, type: 3}
   dots:
   - {fileID: 8829530500298405746, guid: 63edd4e5315f4374986303b5885429d1, type: 3}
   - {fileID: 8280700332966829905, guid: 17fe4f89bfe0c7f4ebc5aa5cd64a8476, type: 3}
@@ -163,6 +163,7 @@ MonoBehaviour:
   - {fileID: 1378245111831257214, guid: 498cb2d9b2021e2448948838b5a2e648, type: 3}
   - {fileID: 3890296309545489466, guid: 102a8371d07ea9c4fadabaa8824cf6b1, type: 3}
   - {fileID: 6057787850091947547, guid: 3318208cef099e64583600ba1f04ad7e, type: 3}
+  defaultTile: {fileID: 6057787850091947547, guid: 0530f0ed9ddb8cd449e1c5f92222471e, type: 3}
   swipeThreshold: 0.5
   speed: 6
   displacement: 0.05
@@ -528,7 +529,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 10
+  orthographic size: 15
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -552,7 +553,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1232618599}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 3, y: 4.5, z: -10}
+  m_LocalPosition: {x: 6.02, y: 9.57, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

@@ -11,12 +11,41 @@ namespace Const
 
     public enum TileType
     {
+        None = -1,
+
+        [Description("#044F00")] //Common
         DarkGreen,
+        [Description("#00FF00")] //Common
         Green,
+        [Description("#0000AB")] //Common
         Indigo,
+        [Description("#FF0000")] //Common
         Red,
+        [Description("#FF5D5D")] //Common
         Salmon,
+        [Description("#008080")] //Common
         Teal,
+        [Description("#FFFF00")] //Common
+        Yellow,
+    }
+
+    public enum TileColorHex
+    {
+        None,
+
+        [Description("#044F00")] //Common
+        DarkGreen,
+        [Description("#00FF00")] //Common
+        Green,
+        [Description("#0000AB")] //Common
+        Indigo,
+        [Description("#FF0000")] //Common
+        Red,
+        [Description("#FF5D5D")] //Common
+        Salmon,
+        [Description("#008080")] //Common
+        Teal,
+        [Description("#FFFF00")] //Common
         Yellow,
     }
 

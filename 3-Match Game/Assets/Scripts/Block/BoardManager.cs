@@ -7,14 +7,16 @@ using UnityEditor.Search;
 using Unity.VisualScripting;
 using System.Linq;
 
+// 전반적인 게임 로직 담당하는 매니저
 public class BoardManager : MonoSingleton<BoardManager>
 {
     // 현재 보드의 X, Y 길이
     [SerializeField] public int width = 7;
     [SerializeField] public int height = 7;
 
-    [SerializeField] private GameObject backGroundBlock;
+    [SerializeField] private GameObject backGroundTile;
     [SerializeField] private GameObject[] dots;
+    [SerializeField] private GameObject defaultTile;
 
     [SerializeField] public float swipeThreshold = 0.5f;  // 터치 이동 최소 거리 임계값
     [SerializeField] private float speed = 6f;
@@ -37,6 +39,7 @@ public class BoardManager : MonoSingleton<BoardManager>
 
     private void Start()
     {
+        ObjectPoolingManager.Instance.CreatePool("Tile", defaultTile, width * height);
         SetBoard(width, height);
     }
 
@@ -54,7 +57,7 @@ public class BoardManager : MonoSingleton<BoardManager>
         {
             for (int i = 0; i < width; ++i)
             {
-                CreateBackGroundTile(i, j);
+                //CreateBackGroundTile(i, j);
                 CreateDotTile(i, j);
             }
         }
@@ -65,7 +68,7 @@ public class BoardManager : MonoSingleton<BoardManager>
     private void CreateBackGroundTile(int x, int y)
     {
         Vector2 tempPosition = new Vector2(x, y);
-        GameObject bgTile = Instantiate(backGroundBlock, tempPosition, Quaternion.identity);
+        GameObject bgTile = Instantiate(backGroundTile, tempPosition, Quaternion.identity);
         bgTile.transform.SetParent(transform);
         bgTile.name = $"({x}, {y})";
         allBgTiles[x, y] = bgTile;
@@ -75,15 +78,18 @@ public class BoardManager : MonoSingleton<BoardManager>
     {
         Vector2 tempPosition = new Vector2(x, y);
         int dotToUse = UnityEngine.Random.Range(0, dots.Length);
-        GameObject objDot = Instantiate(dots[dotToUse], tempPosition, Quaternion.identity);
+        //GameObject objDot = Instantiate(dots[dotToUse], tempPosition, Quaternion.identity);
+        GameObject objDot = ObjectPoolingManager.Instance.GetObject("Tile");
         objDot.transform.SetParent(transform);
 
         Dot dot = objDot.GetComponent<Dot>();
+        dot.Initialize(tempPosition);
         dot.tileType = (TileType)dotToUse;
+        string colorHex = dot.tileType.GetDescription();
+        dot.SetColor(colorHex);
+
         allDots[x, y] = dot;
     }
-
-
 
     /*
      * 전체 타일 검사해서 이미 매칭되어 있는 상태인지 확인
@@ -137,11 +143,10 @@ public class BoardManager : MonoSingleton<BoardManager>
         // 정리된 리스트에서 최소한 가장 낮은 위치에 있는 y좌표를 알고 있어야 해당 위치를 기준으로 남아있는 타일을 이동시킬수 있음.
 
         // 남아있는 타일과 해당 타일이 이동할 위치리스트
-        HashSet<(Dot, Vector2)> tileTargetList = new HashSet<(Dot, Vector2)>();
+        HashSet<(Dot tile, Vector2 target)> tileTargetList = new HashSet<(Dot, Vector2)>();
 
         foreach (var tileMatchData in matchTileDataList)
         {
-            
             int targetY = tileMatchData.Value.Min();    // 이동할 Y좌표
             int minY = tileMatchData.Value.Min() + 1;   // Y좌표 최소값
             for (int i = minY; i < height; ++i)
@@ -158,7 +163,10 @@ public class BoardManager : MonoSingleton<BoardManager>
             }
         }
 
-        StartCoroutine(RunCoroutine(MoveTile(tileTargetList), () =>
+        foreach (var item in tileTargetList)
+            item.tile.SetMoving(true);
+
+        StartCoroutine(RunCoroutine(MoveTileList(tileTargetList), () =>
         {
             // 차례대로 타일 생성
             foreach (var tileMatchData in matchTileDataList)
@@ -169,13 +177,9 @@ public class BoardManager : MonoSingleton<BoardManager>
                 }
             }
 
-            foreach (var dot in allDots)
-            {
-                if (dot == null)
-                {
-                    Debug.Log("");
-                }
-            }
+            foreach (var item in tileTargetList)
+                item.tile.SetMoving(false);
+
             // 타일 추가 된 후에 전체 타일 재검사
             AllTileCheck();
         }));
@@ -474,6 +478,7 @@ public class BoardManager : MonoSingleton<BoardManager>
         onComplete?.Invoke();
     }
 
+    // 타일 이동 함수
     private IEnumerator MoveTile(Dot tile, Vector2 targetPosition)
     {
         while (Vector2.Distance(targetPosition, tile.GetPosition()) > displacement)
@@ -485,7 +490,8 @@ public class BoardManager : MonoSingleton<BoardManager>
         tile.SetPosition(targetPosition);
     }
 
-    private IEnumerator MoveTile(HashSet<(Dot, Vector2)> tileTargetList)
+    // 타일 여러개 동시 이동을 위한 함수
+    private IEnumerator MoveTileList(HashSet<(Dot, Vector2)> tileTargetList)
     {
         List<Coroutine> list = new List<Coroutine>();
 
