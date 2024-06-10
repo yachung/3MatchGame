@@ -133,6 +133,8 @@ public class Dot : MonoBehaviour
         //    clearAnimation.transform.SetParent(this.transform);
         //}
 
+        GameManager.Instance.AddScore(score);
+
         ObjectPoolingManager.Instance.ReturnObject("Tile", this.gameObject);
 
         //Destroy(this.gameObject);
