@@ -5,8 +5,8 @@ using UnityEngine;
 public class Dot : MonoBehaviour
 {
     // 현재 좌표
-    [SerializeField] private int _currentX;
-    [SerializeField] private int _currentY;
+    [SerializeField] private int _logicalX;
+    [SerializeField] private int _logicalY;
 
     [SerializeField] private SpriteRenderer tileImage;
 
@@ -27,21 +27,21 @@ public class Dot : MonoBehaviour
     private float swipeAngle;         // 이동 방향 각도
 
     #region Property
-    public int CurrentX
+    public int LogicalX
     {
-        get => _currentX;
+        get => _logicalX;
         set
         {
-            _currentX = value;
+            _logicalX = value;
         }
     }
 
-    public int CurrentY
+    public int LogicalY
     {
-        get => _currentY;
+        get => _logicalY;
         set
         {
-            _currentY = value;
+            _logicalY = value;
         }
     }
 
@@ -66,8 +66,8 @@ public class Dot : MonoBehaviour
     private void Awake()
     {
         // 좌표 최초 할당 -> set property 호출하지 않음.
-        _currentX = (int)transform.position.x;
-        _currentY = (int)transform.position.y;
+        _logicalX = (int)transform.position.x;
+        _logicalY = (int)transform.position.y;
         // property로 초기화를 하게 되면 CurrentY가 설정되기 전에 CurrentX의 Set 함수가 호출되면서 초기화가 꼬이게 됨.
         // 따라서 초기화는 필드로 초기화하거나 구조체로 묶어서 한번에 초기화 시키는 등의 방법을 사용해야한다.
 
@@ -86,8 +86,8 @@ public class Dot : MonoBehaviour
     {
         SetPosition(position);
 
-        _currentX = (int)transform.position.x;
-        _currentY = (int)transform.position.y;
+        _logicalX = (int)transform.position.x;
+        _logicalY = (int)transform.position.y;
     }
 
     private void OnMouseDown()
@@ -128,8 +128,17 @@ public class Dot : MonoBehaviour
     public void MatchTile()
     {
         GameManager.Instance.AddScore(score);
-        
+
         ObjectPoolingManager.Instance.ReturnObject("Tile", this.gameObject);
+    }
+
+    public void TestTile()
+    {
+        Color color = GetComponent<SpriteRenderer>().color;
+
+        color.a = 0.5f;
+
+        GetComponent<SpriteRenderer>().color = color;
     }
 
     public void RemoveTile()

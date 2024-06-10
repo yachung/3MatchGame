@@ -124,10 +124,10 @@ public class BoardManager : MonoSingleton<BoardManager>
             if (dot == null)
                 continue;
 
-            if (BFSMatchCheck(dot.CurrentX, dot.CurrentY, dot.tileType, (set) => { matchSet.AddRange(set); }))
+            if (BFSMatchCheck(dot.LogicalX, dot.LogicalY, dot.tileType, (set) => { matchSet.AddRange(set); }))
                 continue;
 
-            if (MatchPossibilityCheck(dot.CurrentX, dot.CurrentY))
+            if (MatchPossibilityCheck(dot.LogicalX, dot.LogicalY))
                 dot.isMatchable = true;
             else
                 dot.isMatchable = false;
@@ -147,66 +147,131 @@ public class BoardManager : MonoSingleton<BoardManager>
         }
     }
 
-    private void MatchTileRemove(HashSet<(int, int)> matchSet)
+    IEnumerator RemoveCoroutine(HashSet<(int, int)> matchSet)
     {
-        // 매칭된 타일들 오브젝트 풀로 되돌림
+        foreach (var (x, y) in matchSet)
+            allDots[x, y].TestTile();
+
+        yield return new WaitForSeconds(0.4f);
+
         foreach (var (x, y) in matchSet)
         {
             allDots[x, y].MatchTile();
             allDots[x, y] = null;
         }
 
-        // Key : x좌표 , Value : (매칭된 타일의 y좌표 리스트)
-        Dictionary<int, List<int>> matchTileDataList = new Dictionary<int, List<int>>();
+        RefillBoard();
+    }
 
-        // 루프 돌면서 매칭된 타일의 각 x좌표 별로 채울 타일 갯수 정리
-        foreach (var (xPos, yPos) in matchSet)
-        {
-            if (matchTileDataList.ContainsKey(xPos))
-                matchTileDataList[xPos].Add(yPos);
-            else
-                matchTileDataList.Add(xPos, new List<int> { yPos });
-        }
+    private void MatchTileRemove(HashSet<(int, int)> matchSet)
+    {
+        // 매칭된 타일들 오브젝트 풀로 되돌림
+        //foreach (var (x, y) in matchSet)
+        //{
+        //    allDots[x, y].MatchTile();
+        //    allDots[x, y] = null;
+        //}
 
-        // 정리된 리스트에서 최소한 가장 낮은 위치에 있는 y좌표를 알고 있어야 해당 위치를 기준으로 남아있는 타일을 이동시킬수 있음.
+        StartCoroutine(RemoveCoroutine(matchSet));
 
-        // 남아있는 타일과 해당 타일이 이동할 위치리스트
+        //// Key : x좌표 , Value : (매칭된 타일의 y좌표 리스트)
+        //Dictionary<int, List<int>> matchTileDataList = new Dictionary<int, List<int>>();
+
+        //// 루프 돌면서 매칭된 타일의 각 x좌표 별로 채울 타일 갯수 정리
+        //foreach (var (xPos, yPos) in matchSet)
+        //{
+        //    if (matchTileDataList.ContainsKey(xPos))
+        //        matchTileDataList[xPos].Add(yPos);
+        //    else
+        //        matchTileDataList.Add(xPos, new List<int> { yPos });
+        //}
+
+        //// 정리된 리스트에서 최소한 가장 낮은 위치에 있는 y좌표를 알고 있어야 해당 위치를 기준으로 남아있는 타일을 이동시킬수 있음.
+
+        //// 남아있는 타일과 해당 타일이 이동할 위치리스트
+        //HashSet<(Dot tile, Vector2 target)> tileTargetList = new HashSet<(Dot, Vector2)>();
+
+        //foreach (var tileMatchData in matchTileDataList)
+        //{
+        //    int targetY = tileMatchData.Value.Min();    // 이동할 Y좌표
+        //    int minY = tileMatchData.Value.Min() + 1;   // Y좌표 최소값
+        //    for (int i = minY; i < height; ++i)
+        //    {
+        //        if (allDots[tileMatchData.Key, i] == null)
+        //            continue;
+
+        //        tileTargetList.Add((allDots[tileMatchData.Key, i], new Vector2(tileMatchData.Key, targetY)));
+        //        allDots[tileMatchData.Key, targetY] = allDots[tileMatchData.Key, i];
+        //        allDots[tileMatchData.Key, i] = null;
+        //        allDots[tileMatchData.Key, targetY].LogicalX = tileMatchData.Key;
+        //        allDots[tileMatchData.Key, targetY].LogicalY = targetY;
+        //        targetY++;
+        //    }
+        //}
+
+        //foreach (var item in tileTargetList)
+        //    item.tile.SetMoving(true);
+
+        //StartCoroutine(RunCoroutine(MoveTileList(tileTargetList), () =>
+        //{
+        //    // 차례대로 타일 생성
+        //    foreach (var tileMatchData in matchTileDataList)
+        //    {
+        //        for (int i = 0; i < tileMatchData.Value.Count; ++i)
+        //        {
+        //            CreateDotTile(tileMatchData.Key, height - 1 - i);
+        //        }
+        //    }
+
+        //    foreach (var item in tileTargetList)
+        //        item.tile.SetMoving(false);
+
+        //    // 타일 추가 된 후에 전체 타일 재검사
+        //    AllTileCheck();
+        //}));
+    }
+
+    Coroutine refillCoroutine;
+
+    private void RefillBoard()
+    {
         HashSet<(Dot tile, Vector2 target)> tileTargetList = new HashSet<(Dot, Vector2)>();
 
-        foreach (var tileMatchData in matchTileDataList)
+        int refillCount = 0;
+        for (int i = 0; i < width; ++i)
         {
-            int targetY = tileMatchData.Value.Min();    // 이동할 Y좌표
-            int minY = tileMatchData.Value.Min() + 1;   // Y좌표 최소값
-            for (int i = minY; i < height; ++i)
+            for (int j = 0; j < height; ++j)
             {
-                if (allDots[tileMatchData.Key, i] == null)
-                    continue;
-
-                tileTargetList.Add((allDots[tileMatchData.Key, i], new Vector2(tileMatchData.Key, targetY)));
-                allDots[tileMatchData.Key, targetY] = allDots[tileMatchData.Key, i];
-                allDots[tileMatchData.Key, i] = null;
-                allDots[tileMatchData.Key, targetY].CurrentX = tileMatchData.Key;
-                allDots[tileMatchData.Key, targetY].CurrentY = targetY;
-                targetY++;
-            }
-        }
-
-        foreach (var item in tileTargetList)
-            item.tile.SetMoving(true);
-
-        StartCoroutine(RunCoroutine(MoveTileList(tileTargetList), () =>
-        {
-            // 차례대로 타일 생성
-            foreach (var tileMatchData in matchTileDataList)
-            {
-                for (int i = 0; i < tileMatchData.Value.Count; ++i)
+                if (allDots[i, j] == null)
+                    refillCount++;
+                else if (refillCount > 0)
                 {
-                    CreateDotTile(tileMatchData.Key, height - 1 - i);
+                    tileTargetList.Add((allDots[i, j], new Vector2(i, j - refillCount)));
+                    allDots[i, j - refillCount] = allDots[i, j];
+                    //allDots[i, j].LogicalY -= refillCount;
+                    allDots[i, j] = null;
+                    allDots[i, j - refillCount].LogicalX = i;
+                    allDots[i, j - refillCount].LogicalY = j - refillCount;
                 }
             }
+            refillCount = 0;
+        }
 
-            foreach (var item in tileTargetList)
-                item.tile.SetMoving(false);
+        if (refillCoroutine != null)
+            StopCoroutine(refillCoroutine);
+
+        refillCoroutine = StartCoroutine(RunCoroutine(MoveTileList(tileTargetList), () =>
+        {
+            for (int i = 0; i < width; ++i)
+            {
+                for (int j = 0; j < height; ++j)
+                {
+                    if (allDots[i, j] == null)
+                    {
+                        CreateDotTile(i, j);
+                    }
+                }
+            }
 
             // 타일 추가 된 후에 전체 타일 재검사
             AllTileCheck();
@@ -375,8 +440,8 @@ public class BoardManager : MonoSingleton<BoardManager>
     // 타일 방향 계산해서 스왑
     public void TileSwap(Dot startTile, float swipeAngle)
     {
-        int curX = startTile.CurrentX;
-        int curY = startTile.CurrentY;
+        int curX = startTile.LogicalX;
+        int curY = startTile.LogicalY;
         Dot targetTile = null;
 
         SwapDirection direction = SwapDirection.None;
@@ -425,8 +490,6 @@ public class BoardManager : MonoSingleton<BoardManager>
         StartCoroutine(SwapTilesCoroutine(startTile, targetTile, direction, onComplete));
     }
 
-
-
     private IEnumerator SwapTilesCoroutine(Dot startTile, Dot targetTile, SwapDirection direction, Action<bool> onComplete = null)
     {
         startTile.SetMoving(true);
@@ -453,27 +516,27 @@ public class BoardManager : MonoSingleton<BoardManager>
         else
         {
             // 매칭 성공시 좌표정보 교환
-            allDots[targetTile.CurrentX, targetTile.CurrentY] = startTile;
-            allDots[startTile.CurrentX, startTile.CurrentY] = targetTile;
+            allDots[targetTile.LogicalX, targetTile.LogicalY] = startTile;
+            allDots[startTile.LogicalX, startTile.LogicalY] = targetTile;
 
             switch (direction)
             {
                 case SwapDirection.Right:
-                    targetTile.CurrentX -= 1;
-                    startTile.CurrentX += 1;
+                    targetTile.LogicalX -= 1;
+                    startTile.LogicalX += 1;
                     break;
                 case SwapDirection.Left:
-                    targetTile.CurrentX += 1;
-                    startTile.CurrentX -= 1;
+                    targetTile.LogicalX += 1;
+                    startTile.LogicalX -= 1;
                     break;
 
                 case SwapDirection.Up:
-                    targetTile.CurrentY -= 1;
-                    startTile.CurrentY += 1;
+                    targetTile.LogicalY -= 1;
+                    startTile.LogicalY += 1;
                     break;
                 case SwapDirection.Down:
-                    targetTile.CurrentY += 1;
-                    startTile.CurrentY -= 1;
+                    targetTile.LogicalY += 1;
+                    startTile.LogicalY -= 1;
                     break;
             }
 
