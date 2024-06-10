@@ -167,7 +167,6 @@ MonoBehaviour:
   swipeThreshold: 0.5
   speed: 6
   displacement: 0.05
-  trTileObjectPool: {fileID: 0}
 --- !u!4 &403854905
 Transform:
   m_ObjectHideFlags: 0
@@ -557,7 +556,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_UiScaleMode: 0
+  m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
   m_ReferenceResolution: {x: 800, y: 600}
@@ -759,10 +758,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5e5be7e23228e2f498e92b8230ab7031, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  currentScore: 0
   targetScore: 500
-  currentScoreText: {fileID: 747001616}
+  currentScore: 0
   targetScoreText: {fileID: 1637821136}
+  currentScoreText: {fileID: 747001616}
 --- !u!4 &1617228631
 Transform:
   m_ObjectHideFlags: 0
@@ -836,7 +835,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'Taget Score : 0'
+  m_text: 'Target Score : 0'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: f08945323d59b854d8863083a995589d, type: 2}
   m_sharedMaterial: {fileID: -6700966412966754046, guid: f08945323d59b854d8863083a995589d, type: 2}
@@ -879,7 +878,7 @@ MonoBehaviour:
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_enableWordWrapping: 1
+  m_enableWordWrapping: 0
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
   m_linkedTextComponent: {fileID: 0}

@@ -125,6 +125,13 @@ public class Dot : MonoBehaviour
         BoardManager.Instance.TileSwap(this, swipeAngle);
     }
 
+    public void MatchTile()
+    {
+        GameManager.Instance.AddScore(score);
+        
+        ObjectPoolingManager.Instance.ReturnObject("Tile", this.gameObject);
+    }
+
     public void RemoveTile()
     {
         //if (tileClearAnimation != null)
@@ -133,10 +140,6 @@ public class Dot : MonoBehaviour
         //    clearAnimation.transform.SetParent(this.transform);
         //}
 
-        GameManager.Instance.AddScore(score);
-
         ObjectPoolingManager.Instance.ReturnObject("Tile", this.gameObject);
-
-        //Destroy(this.gameObject);
     }
 }

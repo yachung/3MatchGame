@@ -22,9 +22,6 @@ public class BoardManager : MonoSingleton<BoardManager>
     [SerializeField] private float speed = 6f;
     [SerializeField] private float displacement = 0.05f;
 
-    public Transform trTileObjectPool;
-    private List<Dot> tileObjectPool = new List<Dot>();
-
     public Dot[,] allDots { get; set; }
     private GameObject[,] allBgTiles;
 
@@ -48,10 +45,24 @@ public class BoardManager : MonoSingleton<BoardManager>
         //Debug.Log("test");
     }
 
-    public void SetBoard(int width, int height)
+    private void ClearBoard(int width, int height)
+    {
+        for (int j = 0; j < height; ++j)
+        {
+            for (int i = 0; i < width; ++i)
+            {
+                allDots[i, j].RemoveTile();
+            }
+        }
+    }
+
+    public void SetBoard(int width, int height, bool isClear = false)
     {
         this.width = width;
         this.height = height;
+
+        if (isClear)
+            ClearBoard(width, height);
 
         for (int j = 0; j < height; ++j)
         {
@@ -96,15 +107,24 @@ public class BoardManager : MonoSingleton<BoardManager>
      * 매칭되어 있는 상태라면 hashset에 저장하고 continue
      * 매칭되어 있지 않은 상태라면 매칭가능성체크
      * 전체 타일 체크가 끝나면 hashset에 저장된 타일들 제거후 다시 전체 타일 체크
-     * hashset의 count가 0이 될때까지 반복
+     * 매칭된 타일이 없어질때까지 반복됨
+     * 매칭 가능한 타일이 없다면, 전체 보드 초기화
      */
+
+    /*
+     *  
+     */
+
     public void AllTileCheck()
     {
         HashSet<(int, int)> matchSet = new HashSet<(int, int)>();
 
         foreach (var dot in allDots)
         {
-            if (BFSMatchCheck(dot.CurrentX, dot.CurrentY, allDots[dot.CurrentX, dot.CurrentY].tileType, (set) => { matchSet.AddRange(set); }))
+            if (dot == null)
+                continue;
+
+            if (BFSMatchCheck(dot.CurrentX, dot.CurrentY, dot.tileType, (set) => { matchSet.AddRange(set); }))
                 continue;
 
             if (MatchPossibilityCheck(dot.CurrentX, dot.CurrentY))
@@ -115,27 +135,35 @@ public class BoardManager : MonoSingleton<BoardManager>
 
         if (matchSet.Count > 0)
             MatchTileRemove(matchSet);
+        
+        // 현재 매칭된 타일이 없고, 매칭 가능한 타일도 없다면 현재 보드를 초기화 함
+        if (matchSet.Count == 0)
+        {
+            foreach (var dot in allDots)
+                if (dot.isMatchable)
+                    return;
+
+            SetBoard(width, height, isClear : true);
+        }
     }
 
     private void MatchTileRemove(HashSet<(int, int)> matchSet)
     {
-        // 매칭된 타일들 삭제
+        // 매칭된 타일들 오브젝트 풀로 되돌림
         foreach (var (x, y) in matchSet)
         {
-            allDots[x, y].RemoveTile();
+            allDots[x, y].MatchTile();
             allDots[x, y] = null;
         }
 
-        // Key : x좌표 , Value : (x좌표에서 매칭된 타일갯수, 최소 y좌표)
+        // Key : x좌표 , Value : (매칭된 타일의 y좌표 리스트)
         Dictionary<int, List<int>> matchTileDataList = new Dictionary<int, List<int>>();
 
         // 루프 돌면서 매칭된 타일의 각 x좌표 별로 채울 타일 갯수 정리
         foreach (var (xPos, yPos) in matchSet)
         {
             if (matchTileDataList.ContainsKey(xPos))
-            {
                 matchTileDataList[xPos].Add(yPos);
-            }
             else
                 matchTileDataList.Add(xPos, new List<int> { yPos });
         }
@@ -199,8 +227,16 @@ public class BoardManager : MonoSingleton<BoardManager>
             int nX = x + dir.Item1;
             int nY = y + dir.Item2;
 
+
             // 유효한 좌표인지 확인
-            if (nX < 0 || nX >= width || nY < 0 || nY >= height || !allDots[nX, nY].isMovable)
+            if (nX < 0 || nX >= width || nY < 0 || nY >= height)
+                continue;
+
+            if (allDots[nX, nY] == null)
+                continue;
+
+            // 이동할수 없는 타일은 매칭할수 없으므로 스킵
+            if (!allDots[nX, nY].isMovable)
                 continue;
 
             // 체크하기 위해 임시로 타일 정보만 스왑
