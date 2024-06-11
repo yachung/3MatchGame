@@ -2,7 +2,7 @@ using Const;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Dot : MonoBehaviour
+public class Tile : MonoBehaviour
 {
     // 현재 좌표
     [SerializeField] private int _logicalX;
@@ -15,6 +15,7 @@ public class Dot : MonoBehaviour
     private int score = 10;
 
     public TileType tileType;
+    public TileState tileState;
 
     public bool isMovable = true;                                  // 이동 가능한 타일인지
     public bool isMatchable = false;                               // 매칭가능한 타일인지
@@ -45,7 +46,7 @@ public class Dot : MonoBehaviour
         }
     }
 
-    public bool IsMoving { get; private set; }
+    public bool IsMoving { get; private set; } = false;
 
     public Vector2 GetPosition()
     {
@@ -71,16 +72,11 @@ public class Dot : MonoBehaviour
         // property로 초기화를 하게 되면 CurrentY가 설정되기 전에 CurrentX의 Set 함수가 호출되면서 초기화가 꼬이게 됨.
         // 따라서 초기화는 필드로 초기화하거나 구조체로 묶어서 한번에 초기화 시키는 등의 방법을 사용해야한다.
 
+        tileState = TileState.Idle;
+
         if (tileImage == null)
             tileImage = GetComponent<SpriteRenderer>();
     }
-
-    private ObjectPool pool;
-
-    //void Start()
-    //{
-    //    pool = FindObjectOfType<ObjectPool>();
-    //}
 
     public void Initialize(Vector2 position)
     {
@@ -127,11 +123,23 @@ public class Dot : MonoBehaviour
 
     public void MatchTile()
     {
+        //if (tileClearAnimation != null)
+        //{
+        //    GameObject clearAnimation = Instantiate(tileClearAnimation, transform.position, Quaternion.identity);
+        //    clearAnimation.transform.SetParent(this.transform);
+        //}
+
+        //Debug.Log(tileType.ToString());
+
         GameManager.Instance.AddScore(score);
 
         ObjectPoolingManager.Instance.ReturnObject("Tile", this.gameObject);
     }
 
+    public void RemoveTile()
+    {
+        ObjectPoolingManager.Instance.ReturnObject("Tile", this.gameObject);
+    }
     public void TestTile()
     {
         Color color = GetComponent<SpriteRenderer>().color;
@@ -139,16 +147,5 @@ public class Dot : MonoBehaviour
         color.a = 0.5f;
 
         GetComponent<SpriteRenderer>().color = color;
-    }
-
-    public void RemoveTile()
-    {
-        //if (tileClearAnimation != null)
-        //{
-        //    GameObject clearAnimation = Instantiate(tileClearAnimation, transform.position, Quaternion.identity);
-        //    clearAnimation.transform.SetParent(this.transform);
-        //}
-
-        ObjectPoolingManager.Instance.ReturnObject("Tile", this.gameObject);
     }
 }

@@ -14,7 +14,7 @@ namespace Const
         None = -1,
 
         [Description("#044F00")] //Common
-        DarkGreen,
+        DarkGreen = 0,
         [Description("#00FF00")] //Common
         Green,
         [Description("#0000AB")] //Common
@@ -27,6 +27,14 @@ namespace Const
         Teal,
         [Description("#FFFF00")] //Common
         Yellow,
+
+        Count
+    }
+
+    public enum TileState
+    {
+        Idle,
+        Moving,
     }
 
     public enum TileColorHex
