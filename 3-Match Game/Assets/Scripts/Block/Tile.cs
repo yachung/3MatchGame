@@ -1,4 +1,5 @@
 using Const;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -121,8 +122,40 @@ public class Tile : MonoBehaviour
         BoardManager.Instance.TileSwap(this, swipeAngle);
     }
 
+    Coroutine moveCoroutine = null;
+
+    public IEnumerator MoveCoroutineInvoke(Vector2 targetPosition)
+    {
+        if (moveCoroutine != null)
+        {
+            StopCoroutine(moveCoroutine);
+            moveCoroutine = null;
+        }
+
+        moveCoroutine = StartCoroutine(MoveCoroutine(targetPosition));
+
+        yield return moveCoroutine;
+    }
+
+    // 타일 이동 함수
+    public IEnumerator MoveCoroutine(Vector2 targetPosition)
+    {
+        SetMoving(true);
+
+        while (Vector2.Distance(targetPosition, GetPosition()) > BoardManager.Instance.displacement)
+        {
+            SetPosition(Vector2.Lerp(GetPosition(), targetPosition, BoardManager.Instance.speed * Time.deltaTime));
+            yield return null;
+        }
+
+        SetPosition(targetPosition);
+
+        SetMoving(false);
+    }
+
     public void MatchTile()
     {
+        // 애니메이션
         //if (tileClearAnimation != null)
         //{
         //    GameObject clearAnimation = Instantiate(tileClearAnimation, transform.position, Quaternion.identity);

@@ -42,7 +42,6 @@ public class GameManager : MonoSingleton<GameManager>
 
         GameClear();
     }
-
     public void GameClear()
     {
         if (currentScore >= targetScore && !isGameClear)

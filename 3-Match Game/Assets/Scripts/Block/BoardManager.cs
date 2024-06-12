@@ -19,8 +19,8 @@ public class BoardManager : MonoSingleton<BoardManager>
     [SerializeField] private GameObject defaultTile;
 
     [SerializeField] public float swipeThreshold = 0.5f;  // 터치 이동 최소 거리 임계값
-    [SerializeField] private float speed = 6f;
-    [SerializeField] private float displacement = 0.05f;
+    [SerializeField] public float speed = 6f;
+    [SerializeField] public float displacement = 0.05f;
 
     public Tile[,] TileGrid { get; set; }
     private GameObject[,] BackGroundTileGrid;
@@ -52,10 +52,30 @@ public class BoardManager : MonoSingleton<BoardManager>
         {
             for (int i = 0; i < width; ++i)
             {
+                if (TileGrid[i, j] == null)
+                    continue;
+
                 TileGrid[i, j].RemoveTile();
             }
         }
     }
+
+    public void RefreshBoard()
+    {
+        ClearBoard(width, height);
+
+        for (int j = 0; j < height; ++j)
+        {
+            for (int i = 0; i < width; ++i)
+            {
+                //CreateBackGroundTile(i, j);
+                SpawnTile(i, j);
+            }
+        }
+
+        AllTileCheck();
+    }
+
 
     public void SetBoard(int width, int height, bool isClear = false)
     {
@@ -129,28 +149,28 @@ public class BoardManager : MonoSingleton<BoardManager>
         }
 
         if (matchSet.Count > 0)
-            MatchTileRemove(matchSet);
+        {
+            StartCoroutine(RemoveCoroutine(matchSet));
+            //MatchTileRemove(matchSet);
+        }
         
         // 현재 매칭된 타일이 없고, 매칭 가능한 타일도 없다면 현재 보드를 초기화 함
-        if (matchSet.Count == 0)
-        {
-            foreach (var tile in TileGrid)
-                if (tile.isMatchable)
-                    return;
+        //if (matchSet.Count == 0)
+        //{
+        //    foreach (var tile in TileGrid)
+        //        if (tile.isMatchable)
+        //            return;
 
-            SetBoard(width, height, isClear : true);
-        }
+        //    SetBoard(width, height, isClear : true);
+        //}
     }
 
-    /// <summary>
-    /// 미사용
-    /// </summary>
     IEnumerator RemoveCoroutine(HashSet<(int, int)> matchSet)
     {
         foreach (var (x, y) in matchSet)
             TileGrid[x, y].TestTile();
 
-        yield return new WaitForSeconds(0.4f);
+        yield return new WaitForSeconds(2f);
 
         foreach (var (x, y) in matchSet)
         {
@@ -442,11 +462,11 @@ public class BoardManager : MonoSingleton<BoardManager>
 
         SwapDirection targetDirection = TargetDirection(direction);
 
-        IEnumerator startToTarget = MoveTile(startTile, targetPosition);
-        IEnumerator targetToStart = MoveTile(targetTile, startPosition);
+        IEnumerator startToTarget = startTile.MoveCoroutine(targetPosition);
+        IEnumerator targetToStart = targetTile.MoveCoroutine(startPosition);
 
-        IEnumerator rollBackStart = MoveTile(startTile, startPosition);
-        IEnumerator rollBackTarget = MoveTile(targetTile, targetPosition);
+        IEnumerator rollBackStart = startTile.MoveCoroutine(startPosition);
+        IEnumerator rollBackTarget = targetTile.MoveCoroutine(targetPosition);
 
         bool isMatch = startTile.vaildMatchSet.ContainsKey(direction) || targetTile.vaildMatchSet.ContainsKey(targetDirection);
 
@@ -495,7 +515,8 @@ public class BoardManager : MonoSingleton<BoardManager>
                 matchSet.AddRange(targetTile.vaildMatchSet[targetDirection]);
 
             // 매칭된 타일 삭제
-            MatchTileRemove(matchSet);
+            //MatchTileRemove(matchSet);
+            yield return StartCoroutine(RemoveCoroutine(matchSet));
         }
 
         startTile.SetMoving(false);
@@ -525,41 +546,86 @@ public class BoardManager : MonoSingleton<BoardManager>
     }
 
     // 타일 이동 함수
-    private IEnumerator MoveTile(Tile tile, Vector2 targetPosition)
-    {
-        tile.SetMoving(true);
+    //private IEnumerator MoveTile(Tile tile, Vector2 targetPosition)
+    //{
+    //    tile.SetMoving(true);
 
-        while (Vector2.Distance(targetPosition, tile.GetPosition()) > displacement)
-        {
-            tile.SetPosition(Vector2.Lerp(tile.GetPosition(), targetPosition, speed * Time.deltaTime));
-            yield return null;
-        }
+    //    while (Vector2.Distance(targetPosition, tile.GetPosition()) > displacement)
+    //    {
+    //        tile.SetPosition(Vector2.Lerp(tile.GetPosition(), targetPosition, speed * Time.deltaTime));
+    //        yield return null;
+    //    }
 
-        tile.SetPosition(targetPosition);
+    //    tile.SetPosition(targetPosition);
 
-        tile.SetMoving(false);
-    }
-
-    List<Coroutine> tileCoroutineList = new List<Coroutine>();
+    //    tile.SetMoving(false);
+    //}
 
     // 타일 여러개 동시 이동을 위한 함수
     private IEnumerator MoveTileList(HashSet<(Tile, Vector2)> tileTargetList)
     {
         Debug.Log("MoveTileList Call");
-        if (tileCoroutineList.Count > 0)
-        {
-            foreach (var coroutine in tileCoroutineList)
-                StopCoroutine(coroutine);
-        }
+
+        List<Coroutine> tileCoroutineList = new List<Coroutine>();
 
         // 코루틴 시작하고 리스트에 저장
         foreach (var (tile, targetPosition) in tileTargetList)
-            tileCoroutineList.Add(StartCoroutine(MoveTile(tile, targetPosition)));
+            tileCoroutineList.Add(StartCoroutine(tile.MoveCoroutineInvoke(targetPosition)));
 
         // 리스트에 저장된 코루틴들 전부 끝날때 까지 대기
         foreach (var coroutine in tileCoroutineList)
             yield return coroutine;
-
-        tileCoroutineList.Clear();
     }
+
+    //private Coroutine moveTileCoroutine;
+    //private List<Coroutine> tileCoroutineList = new List<Coroutine>();
+
+    //private IEnumerator MoveTileList(HashSet<(Tile, Vector2)> tileTargetList)
+    //{
+    //    Debug.Log("MoveTileList Call");
+
+    //    // 기존에 실행 중이던 코루틴이 있으면 중지
+    //    if (moveTileCoroutine != null)
+    //    {
+    //        StopCoroutine(moveTileCoroutine);
+    //        moveTileCoroutine = null;
+    //    }
+
+    //    // 기존에 실행 중이던 타일 이동 코루틴들도 모두 중지
+    //    foreach (var coroutine in tileCoroutineList)
+    //    {
+    //        if (coroutine != null)
+    //        {
+    //            StopCoroutine(coroutine);
+    //        }
+    //    }
+
+    //    // 새로운 타일 이동 코루틴 리스트 초기화
+    //    tileCoroutineList.Clear();
+
+    //    // 새로운 코루틴 실행 및 관리
+    //    moveTileCoroutine = StartCoroutine(RunTileCoroutines(tileTargetList));
+
+    //    yield return moveTileCoroutine;
+    //}
+
+    //private IEnumerator RunTileCoroutines(HashSet<(Tile, Vector2)> tileTargetList)
+    //{
+    //    // 코루틴 시작하고 리스트에 저장
+    //    foreach (var (tile, targetPosition) in tileTargetList)
+    //    {
+    //        Coroutine tileCoroutine = StartCoroutine(tile.MoveCoroutine(targetPosition));
+    //        tileCoroutineList.Add(tileCoroutine);
+    //    }
+
+    //    // 리스트에 저장된 코루틴들 전부 끝날때 까지 대기
+    //    foreach (var coroutine in tileCoroutineList)
+    //    {
+    //        yield return coroutine;
+    //    }
+
+    //    // 모든 코루틴 종료 후, 관리 변수 초기화
+    //    moveTileCoroutine = null;
+    //    tileCoroutineList.Clear();
+    //}
 }

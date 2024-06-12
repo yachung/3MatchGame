@@ -9,6 +9,15 @@ namespace Const
 
     }
 
+    public enum MinionState
+    {
+        Idle,
+        Move,
+        Attack,
+        Hurt,
+        Death
+    }
+
     public enum TileType
     {
         None = -1,
