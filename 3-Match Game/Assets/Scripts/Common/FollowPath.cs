@@ -4,22 +4,28 @@ using UnityEngine;
 
 public class FollowPath : MonoBehaviour
 {
-    [SerializeField] private Transform trMoveObject;
-    [SerializeField] private Transform[] wayPoints;
-    [SerializeField] private float speed = 2f;
-    [SerializeField] private float waitTime = 1f;
-    [SerializeField] private float unitPerSecond;
+    private Transform trMoveObject;
+    private Transform[] wayPoints;
+    private float speed = 2f;
+    private float waitTime = 1f;
         
     private int currentIndex = 0;
 
-    private void Start()
-    {
-        MoveStart();
-    }
+    //private void Start()
+    //{
+    //    MoveStart();
+    //}
 
     public void MoveStart()
     {
+        StopMove();
+
         StartCoroutine(Process());
+    }
+
+    public void StopMove()
+    {
+        StopAllCoroutines();
     }
 
     public void Initialize(Transform[] wayPoints, float speed, float waitTime)

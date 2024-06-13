@@ -11,6 +11,7 @@ namespace Const
 
     public enum MinionState
     {
+        None = 0,
         Idle,
         Move,
         Attack,
