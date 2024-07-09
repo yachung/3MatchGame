@@ -6,7 +6,7 @@ public class MinionSpawner : MonoBehaviour
 {
     [SerializeField] private GameObject minionPrefab;
     [SerializeField] private Transform spawnPoint;
-    [SerializeField] private Transform[] wayPoints;
+    [SerializeField] private Transform wayPointContainer;
     [SerializeField] private Transform endPoint;
     [SerializeField] private float speed = 2f;
     [SerializeField] private float waitTime = 1f;
@@ -16,11 +16,20 @@ public class MinionSpawner : MonoBehaviour
 
     List<Minion> spawnMinionList = new List<Minion>();
 
+    Transform[] wayPoints;
+
     Coroutine coMinionSpawn;
 
     private void Awake()
     {
         minionName = minionPrefab.name;
+
+        wayPoints = new Transform[wayPointContainer.childCount];
+
+        for (int i = 0; i < wayPointContainer.childCount; ++i)
+        {
+            wayPoints[i] = wayPointContainer.GetChild(i).transform;
+        }
     }
 
     private void Start()

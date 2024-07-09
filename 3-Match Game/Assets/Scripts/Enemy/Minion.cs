@@ -47,11 +47,11 @@ public class Minion : MonoBehaviour
         targetPosition = newPosition;
     }
 
-    // 들어온 collider가 나와 태그가 다르다면 멈춤
+    // 들어온 collider가 Enemy라면 멈춤
     // 현재 타겟이 없다면 들어온 콜라이더를 타겟으로 설정.
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (!CompareTag(collision.tag))
+        if (collision.tag == "Enemy")
         {
             StateUpdate(MinionState.Idle);
 
@@ -67,7 +67,7 @@ public class Minion : MonoBehaviour
     // 나간 collider가 나와 태그가 다르고, 콜라이더 내부에 같은 태그만 있다면 다시 움직인다.
     private void OnTriggerExit2D(Collider2D collision)
     {
-        if (!CompareTag(collision.tag) && IsColliderEmpty())
+        if (collision.tag == "Enemy" && IsColliderEmpty())
             StateUpdate(MinionState.Move);
     }
 
@@ -89,7 +89,7 @@ public class Minion : MonoBehaviour
         Collider2D[] hitColliders = Physics2D.OverlapBoxAll(minionCollider.bounds.center, minionCollider.bounds.size, 0f);
         foreach (Collider2D hitCollider in hitColliders)
         {
-            if (!CompareTag(hitCollider.tag)) // 범위 내에 있는 콜라이더가 나와 다른 태그를 가졌다면 false 리턴
+            if (hitCollider.tag == "Enemy") // 범위 내에 있는 콜라이더가 나와 다른 태그를 가졌다면 false 리턴
             {
                 return false;
             }

@@ -11,11 +11,6 @@ public class FollowPath : MonoBehaviour
         
     private int currentIndex = 0;
 
-    //private void Start()
-    //{
-    //    MoveStart();
-    //}
-
     public void MoveStart()
     {
         StopMove();

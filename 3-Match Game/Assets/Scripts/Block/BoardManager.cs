@@ -7,6 +7,10 @@ using UnityEditor.Search;
 using System.Linq;
 using Unity.VisualScripting;
 
+/*
+ * 타일 
+ */
+
 // 전반적인 게임 로직 담당하는 매니저
 public class BoardManager : MonoSingleton<BoardManager>
 {
@@ -75,7 +79,6 @@ public class BoardManager : MonoSingleton<BoardManager>
 
         AllTileCheck();
     }
-
 
     public void SetBoard(int width, int height, bool isClear = false)
     {
@@ -150,8 +153,8 @@ public class BoardManager : MonoSingleton<BoardManager>
 
         if (matchSet.Count > 0)
         {
-            StartCoroutine(RemoveCoroutine(matchSet));
-            //MatchTileRemove(matchSet);
+            //StartCoroutine(RemoveCoroutine(matchSet));
+            MatchTileRemove(matchSet);
         }
         
         // 현재 매칭된 타일이 없고, 매칭 가능한 타일도 없다면 현재 보드를 초기화 함
@@ -167,15 +170,20 @@ public class BoardManager : MonoSingleton<BoardManager>
 
     IEnumerator RemoveCoroutine(HashSet<(int, int)> matchSet)
     {
-        foreach (var (x, y) in matchSet)
-            TileGrid[x, y].TestTile();
+        //foreach (var (x, y) in matchSet)
+        //    TileGrid[x, y].TestTile();
 
-        yield return new WaitForSeconds(2f);
+        yield return null;
 
         foreach (var (x, y) in matchSet)
         {
-            TileGrid[x, y].MatchTile();
-            TileGrid[x, y] = null;
+            if (TileGrid[x, y] != null)
+            {
+                TileGrid[x, y].MatchTile();
+                TileGrid[x, y] = null;
+            }
+            else
+                Debug.LogWarning($"TileGrid[{x},{y}] is null");
         }
 
         RefillBoard();
@@ -185,8 +193,13 @@ public class BoardManager : MonoSingleton<BoardManager>
     {
         foreach (var (x, y) in matchSet)
         {
-            TileGrid[x, y].MatchTile();
-            TileGrid[x, y] = null;
+            if (TileGrid[x, y] != null)
+            {
+                TileGrid[x, y].MatchTile();
+                TileGrid[x, y] = null;
+            }
+            else
+                Debug.LogWarning($"TileGrid[{x},{y}] is null");
         }
 
         RefillBoard();
@@ -217,13 +230,14 @@ public class BoardManager : MonoSingleton<BoardManager>
             refillCount = 0;
         }
 
-        if (refillCoroutine != null)
-            StopCoroutine(refillCoroutine);
+        //if (refillCoroutine != null)
+        //    StopCoroutine(refillCoroutine);
 
-        foreach (var item in tileTargetList)
-            item.tile.SetMoving(true);
+        //foreach (var item in tileTargetList)
+        //    item.tile.SetMoving(true);
 
-        refillCoroutine = StartCoroutine(RunCoroutine(MoveTileList(tileTargetList), () =>
+        //refillCoroutine = 
+        StartCoroutine(RunCoroutine(MoveTileList(tileTargetList), () =>
         {
             for (int i = 0; i < width; ++i)
             {
@@ -236,8 +250,8 @@ public class BoardManager : MonoSingleton<BoardManager>
                 }
             }
 
-            foreach (var item in tileTargetList)
-                item.tile.SetMoving(false);
+            //foreach (var item in tileTargetList)
+            //    item.tile.SetMoving(false);
 
             // 타일 추가 된 후에 전체 타일 재검사
             AllTileCheck();
@@ -454,8 +468,8 @@ public class BoardManager : MonoSingleton<BoardManager>
 
     private IEnumerator SwapTilesCoroutine(Tile startTile, Tile targetTile, SwapDirection direction, Action<bool> onComplete = null)
     {
-        startTile.SetMoving(true);
-        targetTile.SetMoving(true);
+        //startTile.SetMoving(true);
+        //targetTile.SetMoving(true);
 
         Vector2 startPosition = startTile.GetPosition();
         Vector2 targetPosition = targetTile.GetPosition();
@@ -515,12 +529,12 @@ public class BoardManager : MonoSingleton<BoardManager>
                 matchSet.AddRange(targetTile.vaildMatchSet[targetDirection]);
 
             // 매칭된 타일 삭제
-            //MatchTileRemove(matchSet);
-            yield return StartCoroutine(RemoveCoroutine(matchSet));
+            MatchTileRemove(matchSet);
+            //yield return StartCoroutine(RemoveCoroutine(matchSet));
         }
 
-        startTile.SetMoving(false);
-        targetTile.SetMoving(false);
+        //startTile.SetMoving(false);
+        //targetTile.SetMoving(false);
 
         onComplete?.Invoke(isMatch);
     }
@@ -570,62 +584,10 @@ public class BoardManager : MonoSingleton<BoardManager>
 
         // 코루틴 시작하고 리스트에 저장
         foreach (var (tile, targetPosition) in tileTargetList)
-            tileCoroutineList.Add(StartCoroutine(tile.MoveCoroutineInvoke(targetPosition)));
+            tileCoroutineList.Add(StartCoroutine(tile.MoveCoroutine(targetPosition)));
 
         // 리스트에 저장된 코루틴들 전부 끝날때 까지 대기
         foreach (var coroutine in tileCoroutineList)
             yield return coroutine;
     }
-
-    //private Coroutine moveTileCoroutine;
-    //private List<Coroutine> tileCoroutineList = new List<Coroutine>();
-
-    //private IEnumerator MoveTileList(HashSet<(Tile, Vector2)> tileTargetList)
-    //{
-    //    Debug.Log("MoveTileList Call");
-
-    //    // 기존에 실행 중이던 코루틴이 있으면 중지
-    //    if (moveTileCoroutine != null)
-    //    {
-    //        StopCoroutine(moveTileCoroutine);
-    //        moveTileCoroutine = null;
-    //    }
-
-    //    // 기존에 실행 중이던 타일 이동 코루틴들도 모두 중지
-    //    foreach (var coroutine in tileCoroutineList)
-    //    {
-    //        if (coroutine != null)
-    //        {
-    //            StopCoroutine(coroutine);
-    //        }
-    //    }
-
-    //    // 새로운 타일 이동 코루틴 리스트 초기화
-    //    tileCoroutineList.Clear();
-
-    //    // 새로운 코루틴 실행 및 관리
-    //    moveTileCoroutine = StartCoroutine(RunTileCoroutines(tileTargetList));
-
-    //    yield return moveTileCoroutine;
-    //}
-
-    //private IEnumerator RunTileCoroutines(HashSet<(Tile, Vector2)> tileTargetList)
-    //{
-    //    // 코루틴 시작하고 리스트에 저장
-    //    foreach (var (tile, targetPosition) in tileTargetList)
-    //    {
-    //        Coroutine tileCoroutine = StartCoroutine(tile.MoveCoroutine(targetPosition));
-    //        tileCoroutineList.Add(tileCoroutine);
-    //    }
-
-    //    // 리스트에 저장된 코루틴들 전부 끝날때 까지 대기
-    //    foreach (var coroutine in tileCoroutineList)
-    //    {
-    //        yield return coroutine;
-    //    }
-
-    //    // 모든 코루틴 종료 후, 관리 변수 초기화
-    //    moveTileCoroutine = null;
-    //    tileCoroutineList.Clear();
-    //}
 }
