@@ -9,15 +9,15 @@ namespace Const
 
     }
 
-    public enum MinionState
-    {
-        None = 0,
-        Idle,
-        Move,
-        Attack,
-        Hurt,
-        Death
-    }
+    //public enum MinionState
+    //{
+    //    None = 0,
+    //    Idle,
+    //    Move,
+    //    Attack,
+    //    Hurt,
+    //    Death
+    //}
 
     public enum TileType
     {

@@ -5,11 +5,13 @@ using UnityEngine;
 public class FollowPath : MonoBehaviour
 {
     private Transform trMoveObject;
-    private Transform[] wayPoints;
+    private Vector3[] wayPoints;
     private float speed = 2f;
     private float waitTime = 1f;
         
     private int currentIndex = 0;
+
+    public bool IsEndPoint { get; private set; }
 
     public void MoveStart()
     {
@@ -23,7 +25,7 @@ public class FollowPath : MonoBehaviour
         StopAllCoroutines();
     }
 
-    public void Initialize(Transform[] wayPoints, float speed, float waitTime)
+    public void Initialize(Vector3[] wayPoints, float speed, float waitTime)
     {
         this.trMoveObject = this.transform;
         this.wayPoints = wayPoints;
@@ -31,7 +33,7 @@ public class FollowPath : MonoBehaviour
         this.waitTime = waitTime;
     }
 
-    public void Initialize(Transform moveObject, Transform[] wayPoints)
+    public void Initialize(Transform moveObject, Vector3[] wayPoints)
     {
         this.trMoveObject = moveObject;
         this.wayPoints = wayPoints;
@@ -43,12 +45,15 @@ public class FollowPath : MonoBehaviour
 
         while (true)
         {
-            yield return StartCoroutine(MoveToWayPoint(wayPoints[currentIndex].position));
+            yield return StartCoroutine(MoveToWayPoint(wayPoints[currentIndex]));
 
             if (currentIndex < wayPoints.Length - 1)
                 currentIndex++;
             else
+            {
+                IsEndPoint = true;
                 break;
+            }
 
             yield return wait;
         }
@@ -62,12 +67,20 @@ public class FollowPath : MonoBehaviour
 
         Debug.Log($"moveTime : {moveTime}");
 
-        while (percent < 1)
+        while (true)
         {
-            percent += Time.deltaTime / moveTime;
+            //percent += Time.deltaTime / moveTime;
+            float distance = (targetPosition - trMoveObject.position).magnitude;
+            if (distance <= 0.1f)
+                break;
+
             trMoveObject.position = Vector3.MoveTowards(trMoveObject.position, targetPosition, speed * Time.deltaTime);
             yield return null;
         }
     }
-    
-}
+
+    public Vector3 CurrentWayPointPosition()
+    {
+        return wayPoints[currentIndex];
+    }
+}   

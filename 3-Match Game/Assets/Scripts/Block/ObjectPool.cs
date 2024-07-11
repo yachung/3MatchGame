@@ -17,6 +17,7 @@ public class ObjectPool : MonoBehaviour
         for (int i = 0; i < initialSize; i++)
         {
             GameObject obj = Instantiate(prefab);
+            obj.name = prefab.name;
             obj.transform.SetParent(poolParent);
             obj.SetActive(false);
             pool.Enqueue(obj);
@@ -34,6 +35,7 @@ public class ObjectPool : MonoBehaviour
         else
         {
             GameObject newObj = Instantiate(prefab);
+            newObj.name = prefab.name;
             newObj.transform.SetParent(poolParent);
             return newObj;
         }

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class MinionSpawner : MonoBehaviour
@@ -12,31 +13,68 @@ public class MinionSpawner : MonoBehaviour
     [SerializeField] private float waitTime = 1f;
     [SerializeField] private int maximumSpawn = 10;
 
+    [SerializeField] private PathFindingManager pathFindingManager;
+    [SerializeField] private Transform objMoveMarker;
+    [SerializeField] private bool isStartSpawnCheck = false;
+    [SerializeField] private bool isEnemySpawner = false;
+
     private string minionName = string.Empty;
 
-    List<Minion> spawnMinionList = new List<Minion>();
+    private List<Minion> spawnMinionList = new List<Minion>();
+    private Vector3[] wayPoints;
+    private Camera mainCamera;
 
-    Transform[] wayPoints;
-
-    Coroutine coMinionSpawn;
+    private Coroutine coMinionSpawn;
 
     private void Awake()
     {
+        mainCamera = Camera.main;
+
         minionName = minionPrefab.name;
 
-        wayPoints = new Transform[wayPointContainer.childCount];
-
-        for (int i = 0; i < wayPointContainer.childCount; ++i)
+        if (wayPointContainer != null )
         {
-            wayPoints[i] = wayPointContainer.GetChild(i).transform;
+            wayPoints = new Vector3[wayPointContainer.childCount];
+
+            for (int i = 0; i < wayPointContainer.childCount; ++i)
+            {
+                wayPoints[i] = wayPointContainer.GetChild(i).transform.position;
+            }
         }
     }
 
     private void Start()
     {
-        ObjectPoolingManager.Instance.CreatePool(minionName, minionPrefab, 20);
+        ObjectPoolingManager.Instance.CreatePool(minionName, minionPrefab, 100);
 
         OnGameStarted();
+    }
+
+    private void Update()
+    {
+        if (isEnemySpawner)
+            return;
+
+        if (Input.GetMouseButtonDown(1))
+        {
+            Vector3 movePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+            movePosition.z = 0f;
+
+            Vector2Int startPos = new Vector2Int((int)spawnPoint.position.x, (int)spawnPoint.position.y);
+            Vector2Int targetPos = new Vector2Int((int)movePosition.x, (int)movePosition.y);
+
+            List<Vector3> pathList = pathFindingManager.PathFinding(startPos, targetPos);
+
+            if (pathList != null)
+            {
+                wayPoints = pathList.ToArray();
+                objMoveMarker.position = movePosition;
+            }
+            else
+            {
+                Debug.Log("pathFinding is Fail");
+            }
+        }
     }
 
     public void OnGameStarted()
@@ -47,7 +85,6 @@ public class MinionSpawner : MonoBehaviour
     public void OnGameEnded()
     {
         StopAllCoroutines();
-        //StopCoroutine(coMinionSpawn);
     }
 
     IEnumerator CoEnemyMinionSpawn()
@@ -57,6 +94,9 @@ public class MinionSpawner : MonoBehaviour
         while (true)
         {
             yield return wait;
+
+            if (wayPoints.Length == 0)
+                continue;
 
             if (spawnMinionList.Count >= maximumSpawn)
                 continue;

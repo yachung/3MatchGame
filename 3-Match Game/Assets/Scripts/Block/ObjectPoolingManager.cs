@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -24,6 +25,18 @@ public class ObjectPoolingManager : MonoSingleton<ObjectPoolingManager>
         }
 
         return null;
+    }
+
+    public void DelayReturnObject(string key, GameObject obj, float delay)
+    {
+        StartCoroutine(CoReturnObject(key, obj, delay));
+    }
+
+    private IEnumerator CoReturnObject(string key, GameObject obj, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        ReturnObject(key, obj);
     }
 
     public void ReturnObject(string key, GameObject obj)
