@@ -60,8 +60,8 @@ public class MinionSpawner : MonoBehaviour
             Vector3 movePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
             movePosition.z = 0f;
 
-            Vector2Int startPos = new Vector2Int((int)spawnPoint.position.x, (int)spawnPoint.position.y);
-            Vector2Int targetPos = new Vector2Int((int)movePosition.x, (int)movePosition.y);
+            Vector2 startPos = spawnPoint.position;
+            Vector2 targetPos = movePosition;
 
             List<Vector3> pathList = pathFindingManager.PathFinding(startPos, targetPos);
 
