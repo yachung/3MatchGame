@@ -15,7 +15,6 @@ public class MinionSpawner : MonoBehaviour
 
     [SerializeField] private PathFindingManager pathFindingManager;
     [SerializeField] private Transform objMoveMarker;
-    [SerializeField] private bool isStartSpawnCheck = false;
     [SerializeField] private bool isEnemySpawner = false;
 
     private string minionName = string.Empty;
@@ -57,6 +56,7 @@ public class MinionSpawner : MonoBehaviour
 
         if (Input.GetMouseButtonDown(1))
         {
+
             Vector3 movePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
             movePosition.z = 0f;
 
@@ -68,6 +68,7 @@ public class MinionSpawner : MonoBehaviour
             if (pathList != null)
             {
                 wayPoints = pathList.ToArray();
+                objMoveMarker.gameObject.SetActive(true);
                 objMoveMarker.position = movePosition;
             }
             else
@@ -95,7 +96,7 @@ public class MinionSpawner : MonoBehaviour
         {
             yield return wait;
 
-            if (wayPoints.Length == 0)
+            if (wayPoints == null)
                 continue;
 
             if (spawnMinionList.Count >= maximumSpawn)
