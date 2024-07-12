@@ -65,7 +65,7 @@ public class FollowPath : MonoBehaviour
 
         float moveTime = Vector3.Distance(trMoveObject.position, targetPosition) / speed;
 
-        Debug.Log($"moveTime : {moveTime}");
+        //Debug.Log($"moveTime : {moveTime}");
 
         while (true)
         {

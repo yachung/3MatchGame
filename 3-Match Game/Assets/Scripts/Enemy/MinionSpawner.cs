@@ -8,7 +8,6 @@ public class MinionSpawner : MonoBehaviour
     [SerializeField] private GameObject minionPrefab;
     [SerializeField] private Transform spawnPoint;
     [SerializeField] private Transform wayPointContainer;
-    [SerializeField] private Transform endPoint;
     [SerializeField] private float speed = 2f;
     [SerializeField] private float waitTime = 1f;
     [SerializeField] private int maximumSpawn = 10;

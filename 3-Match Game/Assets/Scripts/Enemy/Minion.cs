@@ -14,7 +14,7 @@ public class Minion : MonoBehaviour
     protected Animator refAnimator;
     private Vector3 targetPosition;
     public FollowPath followPath;
-    private Collider2D minionCollider;
+    protected Collider2D minionCollider;
 
     protected Collider2D targetCollider = null;
     protected Minion targetMinion = null;
@@ -73,18 +73,18 @@ public class Minion : MonoBehaviour
         //}
     }
 
-    bool IsColliderEmpty()
-    {
-        Collider2D[] hitColliders = Physics2D.OverlapBoxAll(minionCollider.bounds.center, minionCollider.bounds.size, 0f);
-        foreach (Collider2D hitCollider in hitColliders)
-        {
-            if (hitCollider.tag == "Enemy") // 범위 내에 있는 콜라이더가 나와 다른 태그를 가졌다면 false 리턴
-            {
-                return false;
-            }
-        }
-        return true;
-    }
+    //bool IsColliderEmpty()
+    //{
+    //    Collider2D[] hitColliders = Physics2D.OverlapBoxAll(minionCollider.bounds.center, minionCollider.bounds.size, 0f);
+    //    foreach (Collider2D hitCollider in hitColliders)
+    //    {
+    //        if (hitCollider.tag == "Enemy") // 범위 내에 있는 콜라이더가 나와 다른 태그를 가졌다면 false 리턴
+    //        {
+    //            return false;
+    //        }
+    //    }
+    //    return true;
+    //}
 
     //private void AnimationTrigger(MinionState state)
     //{
